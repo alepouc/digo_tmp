@@ -14,7 +14,7 @@ services:
   app:
    container_name: digo-app
    build: app
-   image: python
+   image: digo-app
    volumes:
      - ./app/webapp/:/srv/webapp/
    ports:
