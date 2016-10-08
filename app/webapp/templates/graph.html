@@ -1,30 +1,163 @@
-<html>
-<head>
-<style type="text/css">
-  #container {
-    max-width: 100%;
-    height: 100%;
-    margin: auto;
-  }
-</style>
-</head>
-<body>
 
-<div id="container"></div>
 <script src="/static/sigma/sigma.min.js"></script>
-<script src="/static/sigma/plugins/sigma.parsers.json.min.js"></script>
+<script src="/static/sigma/plugins/sigma.exporters.svg.min.js"></script>
+<script src="/static/sigma/plugins/sigma.layout.forceAtlas2.min.js"></script>
 <script src="/static/sigma/plugins/sigma.neo4j.cypher.min.js"></script>
-<script>
+<script src="/static/sigma/plugins/sigma.parsers.cypher.min.js"></script>
+<script src="/static/sigma/plugins/sigma.parsers.gexf.min.js"></script>
+<script src="/static/sigma/plugins/sigma.parsers.json.min.js"></script>
+<script src="/static/sigma/plugins/sigma.pathfinding.astar.min.js"></script>
+<script src="/static/sigma/plugins/sigma.plugins.animate.min.js"></script>
+<script src="/static/sigma/plugins/sigma.plugins.dragNodes.min.js"></script>
+<script src="/static/sigma/plugins/sigma.plugins.filter.min.js"></script>
+<script src="/static/sigma/plugins/sigma.plugins.neighborhoods.min.js"></script>
+<script src="/static/sigma/plugins/sigma.plugins.relativeSize.min.js"></script>
+<script src="/static/sigma/plugins/sigma.renderers.customEdgeShapes.min.js"></script>
+<script src="/static/sigma/plugins/sigma.renderers.customShapes.min.js"></script>
+<script src="/static/sigma/plugins/sigma.renderers.edgeLabels.min.js"></script>
+<script src="/static/sigma/plugins/sigma.renderers.parallelEdges.min.js"></script>
+<script src="/static/sigma/plugins/sigma.renderers.snapshot.min.js"></script>
+<script src="/static/sigma/plugins/sigma.statistics.HITS.min.js"></script>
 
 
- sigma.parsers.json('data.json', {
-  container: 'container',
-  settings: {
-  defaultNodeColor: '#ec5148'
+
+<div id="container">
+  <style>
+    #graph-container {
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      position: absolute;
+      background-color: #fff;
+    }
+  </style>
+  <div id="graph-container"></div>
+</div>
+<script type="application/javascript">
+
+// these are just some preliminary settings
+var i,
+s,
+img,
+N = 10,
+E = 50,
+g = {
+  nodes: [],
+  edges: []
+},
+urls = [
+  'https://github.com/jacomyal/sigma.js/tree/master/examples/img/img1.png',
+  'https://github.com/jacomyal/sigma.js/tree/master/examples/img/img2.png',
+  'https://github.com/jacomyal/sigma.js/tree/master/examples/img/img3.png',
+  'https://github.com/jacomyal/sigma.js/tree/master/examples/img/img4.png'
+],
+colors = [
+  '#617db4',
+  '#668f3c',
+  '#c6583e',
+  '#b956af'
+];
+
+   // Create new Sigma instance in graph-container div (use your div name here)
+   s = new sigma({
+   graph: g,
+   container: 'graph-container',
+   renderer: {
+      container: document.getElementById('graph-container'),
+      type: 'canvas'
+   },
+   settings: {
+     minNodeSize: 8,
+     maxNodeSize: 16,
+     minEdgeSize: 0.1,
+     maxEdgeSize: 2,
+     enableEdgeHovering: true,
+     edgeHoverSizeRatio:3
+     //doubleClickEnabled: false,
+     //edgeHoverExtremities: true
    }
-});
+   });
+
+   // first you load a json with (important!) s parameter to refer to the sigma instance
+
+   sigma.parsers.json(
+        '/graph',
+        s,
+        function() {
+            // this below adds x, y attributes as well as size = degree of the node
+            var i,
+                    nodes = s.graph.nodes(),
+                    edges = s.graph.edges()
+                    len_nodes = nodes.length;
+                    len_edges = edges.length;
+
+            for (i = 0; i < len_nodes; i++) {
+                nodes[i].x = Math.random();
+                nodes[i].y = Math.random();
+
+
+                if(nodes[i].labels[0] == "Movie"){
+                  nodes[i].color = '#555';
+                }
+                else{
+                  nodes[i].color = '#ddd';
+                }
+
+                if(nodes[i].properties['name']){
+                  nodes[i].label = nodes[i].properties['name']
+                }else{
+                  nodes[i].label = nodes[i].properties['title']
+                }
+                nodes[i].size = s.graph.degree(nodes[i].id);
+
+            }
+
+            for (i = 0; i < len_edges; i++) {
+                edges[i].label = edges[i].type
+                edges[i].size = 0.2
+            }
+
+            // Refresh the display:
+            s.refresh();
+
+            // ForceAtlas Layout
+            s.startForceAtlas2({gravity:100,scalingRatio:70,slowDown:1000000});
+            setTimeout(function(){s.stopForceAtlas2();},1000);
+        }
+   );
+
+   // Initialize the dragNodes plugin:
+   var dragListener = sigma.plugins.dragNodes(s, s.renderers[0]);
+
+     // Bind the events:
+  //s.bind('overNode outNode clickNode doubleClickNode rightClickNode', function(e) {
+  //  console.log(e.type, e.data.node.label, e.data.captor);
+  //});
+  //s.bind('overEdge outEdge clickEdge doubleClickEdge rightClickEdge', function(e) {
+  //  console.log(e.type, e.data.edge, e.data.captor);
+  //});
+  s.bind('clickNode', function(e) {
+    //console.log(e.type, e.data.captor);
+    var nodeIdx = e.data.node.id;
+    var nodes = s.graph.nodes();
+    nodes.forEach(function(node){
+      if (nodeIdx === node.id) {
+        properties=""
+        for (var i in node.properties){
+            properties+=i+": "+node.properties[i]+"\n"
+        }
+        alert(properties)
+      } else {
+
+      }
+    });
+  });
+  //s.bind('RightClickNode', function(e) {
+    //console.log(e.type, e.data.captor);
+ //});
+
+
 
 
 </script>
-</body>
-</html>
