@@ -13,10 +13,21 @@ app = Flask(__name__)
 
 gdb = GraphDatabase("http://digo-db:7474/db/data", username="neo4j", password="debug")
 
-
+'''
 @app.route('/')
 def index():
     return render_template('graph.html')
+'''
+
+
+@app.route('/')
+def homepage():
+    return render_template("index.html")
+
+
+@app.route('/graph.html')
+def graphpage():
+    return render_template("graph.html")
 
 
 @app.route("/graph")
@@ -57,7 +68,6 @@ def get_graph():
         if item not in new_list_edges:
             new_list_edges.append(item)
 
-    #print(new_list_edges)
 
     new_result = '{"nodes":['+str(json.dumps(new_list_nodes))+'],"edges":['+str(json.dumps(new_list_edges))+']}'
     new_result = new_result.replace('[[','[').replace(']]',']')
@@ -68,4 +78,6 @@ def get_graph():
 
 
 
-app.run(host='0.0.0.0', port=5000, debug = True)
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000, debug = True)
