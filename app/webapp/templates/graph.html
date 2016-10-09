@@ -21,19 +21,19 @@
 
 
 
-<div id="container">
-  <style>
-    #graph-container {
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      position: absolute;
-      background-color: #fff;
+<style>
+    #graph-class {
+      position: relative;
+      width: 95%;
+      height: 70%;
     }
   </style>
-  <div id="graph-container"></div>
-</div>
+  <div id="graph-class" class="col-md-12">
+
+  </div>
+
+
+
 <script type="application/javascript">
 
 // these are just some preliminary settings
@@ -58,13 +58,12 @@ colors = [
   '#c6583e',
   '#b956af'
 ];
-
-   // Create new Sigma instance in graph-container div (use your div name here)
+   // Create new Sigma instance in graph-class div (use your div name here)
    s = new sigma({
    graph: g,
-   container: 'graph-container',
+   container: 'graph-class',
    renderer: {
-      container: document.getElementById('graph-container'),
+      container: document.getElementById('graph-class'),
       type: 'canvas'
    },
    settings: {
@@ -78,6 +77,14 @@ colors = [
      //edgeHoverExtremities: true
    }
    });
+
+
+   var transform_table;
+   $.getJSON("transform_table", function(json){
+       transform_table = json;
+   });
+
+
 
    // first you load a json with (important!) s parameter to refer to the sigma instance
 
@@ -98,10 +105,10 @@ colors = [
 
 
                 if(nodes[i].labels[0] == "Movie"){
-                  nodes[i].color = '#555';
+                  nodes[i].color = '#ffa31a';
                 }
                 else{
-                  nodes[i].color = '#ddd';
+                  nodes[i].color = '#e60000';
                 }
 
                 if(nodes[i].properties['name']){
@@ -122,40 +129,73 @@ colors = [
             s.refresh();
 
             // ForceAtlas Layout
-            s.startForceAtlas2({gravity:100,scalingRatio:70,slowDown:1000000});
-            setTimeout(function(){s.stopForceAtlas2();},1000);
+            //s.startForceAtlas2({gravity:100,scalingRatio:70,slowDown:1000000});
+            //setTimeout(function(){s.stopForceAtlas2();},1000);
         }
    );
 
    // Initialize the dragNodes plugin:
    var dragListener = sigma.plugins.dragNodes(s, s.renderers[0]);
 
-     // Bind the events:
-  //s.bind('overNode outNode clickNode doubleClickNode rightClickNode', function(e) {
-  //  console.log(e.type, e.data.node.label, e.data.captor);
-  //});
-  //s.bind('overEdge outEdge clickEdge doubleClickEdge rightClickEdge', function(e) {
-  //  console.log(e.type, e.data.edge, e.data.captor);
-  //});
+
   s.bind('clickNode', function(e) {
     //console.log(e.type, e.data.captor);
     var nodeIdx = e.data.node.id;
     var nodes = s.graph.nodes();
     nodes.forEach(function(node){
       if (nodeIdx === node.id) {
-        properties=""
+        var properties = node.labels[0]+"<br>"
         for (var i in node.properties){
-            properties+=i+": "+node.properties[i]+"\n"
+            properties+=i+": "+node.properties[i]+"<br>"
         }
-        alert(properties)
-      } else {
-
+        var type = node.labels[0];
+        var actions = "";
+        for (var row in transform_table[type]) {
+          actions += '<button id="actions" type="button" class="btn btn-primary" data-toggle="modal" data-target=".actions-'+transform_table[type][row]+'">'+transform_table[type][row]+'</button>'
+          actions += '<div class="modal fade actions-'+transform_table[type][row]+'" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">'
+          actions += '<div class="modal-dialog modal-lg" role="document">'
+          actions += '<div class="modal-content">'
+          actions += '...'
+          actions += '</div>'
+          actions += '</div>'
+          actions += '</div>'
+          actions += '<br><br>'
+        }
+        var output = properties+"<br><br><h3>Actions</h3>"+actions
+        $("#side-description").html(output);
       }
+
+
     });
   });
-  //s.bind('RightClickNode', function(e) {
-    //console.log(e.type, e.data.captor);
- //});
+
+
+  ajax_function = function(uri, method, data) {
+  var request = {
+      url: uri,
+      type: method,
+      contentType: "application/json",
+      accepts: "application/json",
+      cache: false,
+      dataType: 'json',
+      data: JSON.stringify(data),
+      beforeSend: function (xhr) {
+          xhr.setRequestHeader("Authorization",
+              "Basic " + btoa(self.username + ":" + self.password));
+      },
+      error: function(jqXHR) {
+          console.log("ajax error " + jqXHR.status);
+      }
+  };
+  return $.ajax(request);
+}
+
+
+  $(document).on('click', 'button#actions.btn.btn-primary', function() {
+    ajax_function("action","GET")
+  });
+
+
 
 
 

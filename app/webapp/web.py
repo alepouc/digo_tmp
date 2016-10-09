@@ -35,7 +35,7 @@ def get_graph():
     #query = 'MATCH p=shortestPath( (bacon:Person {name:"Kevin Bacon"})-[*]-(meg:Person {name:"Meg Ryan"}) ) RETURN p'
     #query = 'MATCH (people:Person)-[relatedTo]-(:Movie {title: "Cloud Atlas"}) RETURN people.name, Type(relatedTo), relatedTo'
     #query = 'MATCH (n) RETURN n'
-    query = 'MATCH (n)-[r]-(m) RETURN n, r, m limit 3'
+    query = 'MATCH (n)-[r]-(m) RETURN n, r, m limit 10'
 
     results = gdb.query(query, data_contents=True)
 
@@ -76,6 +76,25 @@ def get_graph():
 
     return new_result
 
+
+
+
+@app.route('/transform_table')
+def get_transform_table():
+    transform_table = {
+                        "Person":["actionPerson_A", "actionPerson_B"],
+                        "Movie":["actionMovie_C", "actionMovie_D"],
+                      }
+    return jsonify(transform_table)
+
+
+
+
+
+@app.route('/action')
+def get_actions():
+    time.sleep(1)
+    return "plop"
 
 
 
