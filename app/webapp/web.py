@@ -6,7 +6,11 @@ from neo4jrestclient.client import GraphDatabase
 import time
 import json
 from pprint import pprint
+from glob import glob
+import os
 import random
+from collections import defaultdict
+from actions import *
 
 
 app = Flask(__name__)
@@ -59,6 +63,8 @@ def convertNeo4jJsonToSigma(neo4jJson):
 
 
 
+
+
 @app.route('/')
 def get_homepage():
     '''
@@ -67,9 +73,11 @@ def get_homepage():
     return render_template("index.html")
 
 
+
 @app.route('/graph.html')
 def get_graphpage():
     return render_template("graph.html")
+
 
 
 @app.route("/neo4jJson")
@@ -80,31 +88,36 @@ def get_neo4jJson():
     #query = 'MATCH p=shortestPath( (bacon:Person {name:"Kevin Bacon"})-[*]-(meg:Person {name:"Meg Ryan"}) ) RETURN p'
     #query = 'MATCH (people:Person)-[relatedTo]-(:Movie {title: "Cloud Atlas"}) RETURN people.name, Type(relatedTo), relatedTo'
     #query = 'MATCH (n) RETURN n'
-    query = 'MATCH (n)-[r]-(m) RETURN n, r, m limit 5'
+    query = 'MATCH (n)-[r]-(m) RETURN n, r, m limit 20'
     results = gdb.query(query, data_contents=True)
-    SigmaJSON = convertNeo4jJsonToSigma(results.graph)
-    return SigmaJSON
+    if results:
+        SigmaJSON = convertNeo4jJsonToSigma(results.graph)
+        return SigmaJSON
+    else:
+        return "Error"
 
 
 
+@app.route('/getActionListing')
+def getActionListing():
+    files = glob('actions/*')
+    result_json = defaultdict(list)
 
-@app.route('/transform_table')
-def get_transform_table():
-    transform_table = {
-                        "Person":["actionPerson_A", "actionPerson_B"],
-                        "Movie":["actionMovie_C", "actionMovie_D"],
-                      }
-    return jsonify(transform_table)
-
-
+    for row in files:
+        action_type = row.split("_")[0].split("/")[1]
+        action = row.split("_")[1]
+        result_json[action_type].append(action)
+    return jsonify(result_json)
 
 
 
 @app.route('/action')
 def get_actions():
-    time.sleep(2)
-    return '{"actions":["action1", "action2"]}'
-
+    action = request.args.get('action')
+    input = request.args.get('input')
+    result = domain_whois.whois(input)
+    result = '{"json_result":['+str(result)+']}'
+    return jsonify(result)
 
 
 if __name__ == "__main__":

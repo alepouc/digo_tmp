@@ -1,4 +1,4 @@
 uwsgi
 Flask
-py2neo
 neo4jrestclient
+python-whois

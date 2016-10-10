@@ -26,7 +26,7 @@
   #graph-class {
     position: relative;
     width: 95%;
-    height: 70%;
+    height: 100%;
   }
 </style>
 <div id="graph-class" class="col-md-12"></div>
@@ -34,6 +34,34 @@
 
 
 <script type="application/javascript">
+
+  var node_selected;
+
+  //
+  //
+  //
+  ajax_function = function(uri, method, data, async) {
+    var request = {
+        url: uri,
+        type: method,
+        //contentType: "application/json",
+        //accepts: "application/json",
+        cache: false,
+        async: true,
+        dataType: 'json',
+        data: data,
+        beforeSend: function (xhr) {
+            xhr.setRequestHeader("Authorization",
+                "Basic " + btoa(self.username + ":" + self.password));
+        },
+        error: function(jqXHR) {
+            console.log("ajax error " + jqXHR.status);
+        }
+    };
+    return $.ajax(request);
+  }
+
+
   //
   // Create new Sigma instance in graph-class div
   //
@@ -51,9 +79,9 @@
     },
     settings: {
      minNodeSize: 8,
-     maxNodeSize: 16,
+     maxNodeSize: 30,
      minEdgeSize: 0.1,
-     maxEdgeSize: 2,
+     maxEdgeSize: 1,
      enableEdgeHovering: true,
      edgeHoverSizeRatio:3
      //doubleClickEnabled: false,
@@ -71,6 +99,9 @@
     s,
     function() {
         var i,
+        color_ip = "#FF756E"
+        color_domain = "#DE9BF9"
+        color_edges = "#A5ABB6"
         nodes = s.graph.nodes();
         edges = s.graph.edges();
         len_nodes = nodes.length;
@@ -78,18 +109,15 @@
 
         for (i = 0; i < len_nodes; i++) {
 
-            if(nodes[i].labels[0] == "Movie"){
-              nodes[i].color = '#ffa31a';
+            nodes[i].label = nodes[i].properties['value']
+
+            if(nodes[i].labels[0] == "Ip"){
+              nodes[i].color = color_ip
             }
-            else{
-              nodes[i].color = '#e60000';
+            else if (nodes[i].labels[0] == "Domain") {
+              nodes[i].color = color_domain;
             }
 
-            if(nodes[i].properties['name']){
-              nodes[i].label = nodes[i].properties['name']
-            }else{
-              nodes[i].label = nodes[i].properties['title']
-            }
             nodes[i].size = s.graph.degree(nodes[i].id);
 
         }
@@ -97,6 +125,7 @@
         for (i = 0; i < len_edges; i++) {
             edges[i].label = edges[i].type
             edges[i].size = 0.2
+            edges[i].color = color_edges
         }
 
         // Refresh the display:
@@ -118,19 +147,19 @@
 
 
  //
- // Get Transform table JSON
+ // Get Actions Listing table JSON
  //
- var transform_table;
- $.getJSON("transform_table", function(json){
-     transform_table = json;
- });
-
+var actionsListing;
+ajax_function("getActionListing","GET", false, "").done(function(json) {
+  actionsListing = json;
+});
 
 
  //
  // Write properties and actions on sidebar
  //
  s.bind('clickNode', function(e) {
+   node_selected = e.data.node
    var nodeIdx = e.data.node.id;
    var nodes = s.graph.nodes();
    nodes.forEach(function(node){
@@ -139,10 +168,10 @@
        for (var i in node.properties){
            properties+=i+": "+node.properties[i]+"<br>"
        }
-       var type = node.labels[0];
+       var type = node.labels[0].toLowerCase();
        var actions = "";
-       for (var row in transform_table[type]) {
-         actions += '<button type="button" id="button-actions" class="btn btn-primary" data-toggle="modal">'+transform_table[type][row]+'</button>'
+       for (var row in actionsListing[type]) {
+         actions += '<button type="button" id="button-actions" class="btn btn-primary" data-toggle="modal" value='+actionsListing[type][row]+'>'+actionsListing[type][row]+'</button>'
          actions += '<br><br>'
        }
        var output = properties+"<br><br><h3>Actions</h3>"+actions
@@ -152,36 +181,14 @@
  });
 
 
-  //
-  //
-  //
-  ajax_function = function(uri, method, data) {
-    var request = {
-        url: uri,
-        type: method,
-        contentType: "application/json",
-        accepts: "application/json",
-        cache: false,
-        dataType: 'json',
-        data: JSON.stringify(data),
-        beforeSend: function (xhr) {
-            xhr.setRequestHeader("Authorization",
-                "Basic " + btoa(self.username + ":" + self.password));
-        },
-        error: function(jqXHR) {
-            console.log("ajax error " + jqXHR.status);
-        }
-    };
-    return $.ajax(request);
-  }
 
   $(document).on('click', '#button-actions', function() {
-    ajax_function("action","GET").done(function(data) {
+    ajax_function("action","GET", "action="+$(this).val()+"&input="+node_selected.label).done(function(data) {
       var result = ""
-      for (var i = 0; i < data.actions.length; i++) {
-        result += data.actions[i];
+      json_result = JSON.parse(data).json_result['0']
+      for (var key in json_result) {
+          result += key+": "+json_result[key]+"<br>"
       }
-      console.log(result)
       $("#modal-actions-content").html(result);
       $('#modal-actions').modal('show')
     });
@@ -192,7 +199,7 @@
   $body = $("body");
   $(document).on({
       ajaxStart: function() { $body.addClass("loading");    },
-       ajaxStop: function() { $body.removeClass("loading"); }
+      ajaxStop: function() { $body.removeClass("loading"); }
   });
 
 
