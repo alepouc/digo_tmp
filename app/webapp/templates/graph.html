@@ -1,213 +1,281 @@
+<script src="/static/linkurious/src/sigma.core.js"></script>
+<script src="/static/linkurious/src/conrad.js"></script>
+<script src="/static/linkurious/src/utils/sigma.utils.js"></script>
+<script src="/static/linkurious/src/utils/sigma.polyfills.js"></script>
+<script src="/static/linkurious/src/sigma.settings.js"></script>
+<script src="/static/linkurious/src/classes/sigma.classes.dispatcher.js"></script>
+<script src="/static/linkurious/src/classes/sigma.classes.configurable.js"></script>
+<script src="/static/linkurious/src/classes/sigma.classes.graph.js"></script>
+<script src="/static/linkurious/src/classes/sigma.classes.camera.js"></script>
+<script src="/static/linkurious/src/classes/sigma.classes.quad.js"></script>
+<script src="/static/linkurious/src/classes/sigma.classes.edgequad.js"></script>
+<script src="/static/linkurious/src/captors/sigma.captors.mouse.js"></script>
+<script src="/static/linkurious/src/captors/sigma.captors.touch.js"></script>
+<script src="/static/linkurious/src/renderers/sigma.renderers.canvas.js"></script>
+<script src="/static/linkurious/src/renderers/sigma.renderers.webgl.js"></script>
+<script src="/static/linkurious/src/renderers/sigma.renderers.svg.js"></script>
+<script src="/static/linkurious/src/renderers/sigma.renderers.def.js"></script>
+<script src="/static/linkurious/src/renderers/webgl/sigma.webgl.nodes.def.js"></script>
+<script src="/static/linkurious/src/renderers/webgl/sigma.webgl.nodes.fast.js"></script>
+<script src="/static/linkurious/src/renderers/webgl/sigma.webgl.edges.def.js"></script>
+<script src="/static/linkurious/src/renderers/webgl/sigma.webgl.edges.fast.js"></script>
+<script src="/static/linkurious/src/renderers/webgl/sigma.webgl.edges.arrow.js"></script>
+<script src="/static/linkurious/src/renderers/canvas/sigma.canvas.labels.def.js"></script>
+<script src="/static/linkurious/src/renderers/canvas/sigma.canvas.hovers.def.js"></script>
+<script src="/static/linkurious/src/renderers/canvas/sigma.canvas.nodes.def.js"></script>
+<script src="/static/linkurious/src/renderers/canvas/sigma.canvas.edges.def.js"></script>
+<script src="/static/linkurious/src/renderers/canvas/sigma.canvas.edges.curve.js"></script>
+<script src="/static/linkurious/src/renderers/canvas/sigma.canvas.edges.arrow.js"></script>
+<script src="/static/linkurious/src/renderers/canvas/sigma.canvas.edges.curvedArrow.js"></script>
+<script src="/static/linkurious/src/renderers/canvas/sigma.canvas.edgehovers.def.js"></script>
+<script src="/static/linkurious/src/renderers/canvas/sigma.canvas.edgehovers.curve.js"></script>
+<script src="/static/linkurious/src/renderers/canvas/sigma.canvas.edgehovers.arrow.js"></script>
+<script src="/static/linkurious/src/renderers/canvas/sigma.canvas.edgehovers.curvedArrow.js"></script>
+<script src="/static/linkurious/src/renderers/canvas/sigma.canvas.extremities.def.js"></script>
+<script src="/static/linkurious/src/renderers/svg/sigma.svg.utils.js"></script>
+<script src="/static/linkurious/src/renderers/svg/sigma.svg.nodes.def.js"></script>
+<script src="/static/linkurious/src/renderers/svg/sigma.svg.edges.def.js"></script>
+<script src="/static/linkurious/src/renderers/svg/sigma.svg.edges.curve.js"></script>
+<script src="/static/linkurious/src/renderers/svg/sigma.svg.labels.def.js"></script>
+<script src="/static/linkurious/src/renderers/svg/sigma.svg.hovers.def.js"></script>
+<script src="/static/linkurious/src/middlewares/sigma.middlewares.rescale.js"></script>
+<script src="/static/linkurious/src/middlewares/sigma.middlewares.copy.js"></script>
+<script src="/static/linkurious/src/misc/sigma.misc.animation.js"></script>
+<script src="/static/linkurious/src/misc/sigma.misc.bindEvents.js"></script>
+<script src="/static/linkurious/src/misc/sigma.misc.bindDOMEvents.js"></script>
+<script src="/static/linkurious/src/misc/sigma.misc.drawHovers.js"></script>
+<script src="/static/linkurious/plugins/sigma.plugins.dragNodes/settings.js"></script>
+<script src="/static/linkurious/plugins/sigma.plugins.dragNodes/sigma.plugins.dragNodes.js"></script>
 
-<script src="/static/sigma/sigma.min.js"></script>
-<script src="/static/sigma/plugins/sigma.exporters.svg.min.js"></script>
-<script src="/static/sigma/plugins/sigma.layout.forceAtlas2.min.js"></script>
-<script src="/static/sigma/plugins/sigma.neo4j.cypher.min.js"></script>
-<script src="/static/sigma/plugins/sigma.parsers.cypher.min.js"></script>
-<script src="/static/sigma/plugins/sigma.parsers.gexf.min.js"></script>
-<script src="/static/sigma/plugins/sigma.parsers.json.min.js"></script>
-<script src="/static/sigma/plugins/sigma.pathfinding.astar.min.js"></script>
-<script src="/static/sigma/plugins/sigma.plugins.animate.min.js"></script>
-<script src="/static/sigma/plugins/sigma.plugins.dragNodes.min.js"></script>
-<script src="/static/sigma/plugins/sigma.plugins.filter.min.js"></script>
-<script src="/static/sigma/plugins/sigma.plugins.neighborhoods.min.js"></script>
-<script src="/static/sigma/plugins/sigma.plugins.relativeSize.min.js"></script>
-<script src="/static/sigma/plugins/sigma.renderers.customEdgeShapes.min.js"></script>
-<script src="/static/sigma/plugins/sigma.renderers.customShapes.min.js"></script>
-<script src="/static/sigma/plugins/sigma.renderers.edgeLabels.min.js"></script>
-<script src="/static/sigma/plugins/sigma.renderers.parallelEdges.min.js"></script>
-<script src="/static/sigma/plugins/sigma.renderers.snapshot.min.js"></script>
-<script src="/static/sigma/plugins/sigma.statistics.HITS.min.js"></script>
+<script src="/static/linkurious/plugins/sigma.parsers.json/sigma.parsers.json.js"></script>
+
+<script src="/static/linkurious/plugins/sigma.layouts.forceAtlas2/worker.js"></script>
+<script src="/static/linkurious/plugins/sigma.layouts.forceAtlas2/supervisor.js"></script>
+
+<script src="/static/linkurious/plugins/sigma.helpers.graph/sigma.helpers.graph.js"></script>
+<script src="/static/linkurious/plugins/sigma.plugins.activeState/sigma.plugins.activeState.js"></script>
+<script src="/static/linkurious/plugins/sigma.plugins.select/sigma.plugins.select.js"></script>
+<script src="/static/linkurious/plugins/sigma.plugins.keyboard/sigma.plugins.keyboard.js"></script>
+
+<script src="/static/linkurious/plugins/sigma.renderers.linkurious/settings.js"></script>
+<script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.labels.def.js"></script>
+<script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.hovers.def.js"></script>
+<script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.nodes.def.js"></script>
+<script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.nodes.cross.js"></script>
+<script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.nodes.diamond.js"></script>
+<script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.nodes.equilateral.js"></script>
+<script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.nodes.square.js"></script>
+<script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.nodes.star.js"></script>
+<script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.edges.def.js"></script>
+<script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.edges.curve.js"></script>
+<script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.edges.arrow.js"></script>
+<script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.edges.curvedArrow.js"></script>
 
 <link rel="stylesheet" type="text/css" href="/static/ajaxload.css" media="screen" />
 
+  <div id="graph-container"></div>
+  <div id="corner-sidebar-relations"></div>
+  <div id="corner-sidebar-nodes"></div>
+</div>
+<script>
 
-<style>
-  #graph-class {
-    position: relative;
-    width: 95%;
-    height: 100%;
-  }
-</style>
-<div id="graph-class" class="col-md-12"></div>
-
-
-
-<script type="application/javascript">
-
-  var node_selected;
-
-  //
-  //
-  //
-  ajax_function = function(uri, method, data, async) {
-    var request = {
-        url: uri,
-        type: method,
-        //contentType: "application/json",
-        //accepts: "application/json",
-        cache: false,
-        async: true,
-        dataType: 'json',
-        data: data,
-        beforeSend: function (xhr) {
-            xhr.setRequestHeader("Authorization",
-                "Basic " + btoa(self.username + ":" + self.password));
-        },
-        error: function(jqXHR) {
-            console.log("ajax error " + jqXHR.status);
-        }
-    };
-    return $.ajax(request);
-  }
-
-
-  //
-  // Create new Sigma instance in graph-class div
-  //
-  g = {
-    nodes: [],
-    edges: []
-  };
-
-  s = new sigma({
-    graph: g,
-    container: 'graph-class',
-    renderer: {
-      container: document.getElementById('graph-class'),
-      type: 'canvas'
-    },
-    settings: {
-     minNodeSize: 8,
-     maxNodeSize: 30,
-     minEdgeSize: 0.1,
-     maxEdgeSize: 1,
-     enableEdgeHovering: true,
-     edgeHoverSizeRatio:3
-     //doubleClickEnabled: false,
-     //edgeHoverExtremities: true
-   }
- });
-
-
-
+var node_selected;
  //
- // Get Neo4j JSON and parse it
  //
- sigma.parsers.json(
-    '/neo4jJson',
+ //
+ ajax_function = function(uri, method, data, async) {
+   var request = {
+       url: uri,
+       type: method,
+       //contentType: "application/json",
+       //accepts: "application/json",
+       cache: false,
+       async: true,
+       dataType: 'json',
+       data: data,
+       beforeSend: function (xhr) {
+           xhr.setRequestHeader("Authorization",
+               "Basic " + btoa(self.username + ":" + self.password));
+       },
+       error: function(jqXHR) {
+           console.log("ajax error " + jqXHR.status);
+       }
+   };
+   return $.ajax(request);
+ }
+
+
+
+var i,
     s,
-    function() {
-        var i,
-        color_ip = "#FF756E"
-        color_domain = "#DE9BF9"
-        color_edges = "#A5ABB6"
-        nodes = s.graph.nodes();
-        edges = s.graph.edges();
-        len_nodes = nodes.length;
-        len_edges = edges.length;
+    N = 100,
+    E = 500,
+    g = {
+      nodes: [],
+      edges: []
+    };
 
-        for (i = 0; i < len_nodes; i++) {
 
-            nodes[i].label = nodes[i].properties['value']
-
-            if(nodes[i].labels[0] == "Ip"){
-              nodes[i].color = color_ip
-            }
-            else if (nodes[i].labels[0] == "Domain") {
-              nodes[i].color = color_domain;
-            }
-
-            nodes[i].size = s.graph.degree(nodes[i].id);
-
-        }
-
-        for (i = 0; i < len_edges; i++) {
-            edges[i].label = edges[i].type
-            edges[i].size = 0.2
-            edges[i].color = color_edges
-        }
-
-        // Refresh the display:
-        s.refresh();
-
-        // ForceAtlas Layout
-        //s.startForceAtlas2({gravity:100,scalingRatio:70,slowDown:1000000});
-        //setTimeout(function(){s.stopForceAtlas2();},1000);
+    s = new sigma({
+      graph: g,
+      renderer: {
+        container: document.getElementById('graph-container'),
+        type: 'canvas'
+      },
+      settings: {
+        minNodeSize: 8,
+        maxNodeSize: 20,
+        minEdgeSize: 0.1,
+        maxEdgeSize: 1,
+        dragNodeStickiness: 0.01,
+        borderSize: 2,
+        outerBorderSize: 3,
+        defaultNodeBorderColor: '#fff',
+        defaultNodeOuterBorderColor: 'rgb(236, 81, 72)',
+        edgeHoverHighlightNodes: 'circle',
+        enableEdgeHovering: true,
+        edgeHoverSizeRatio:3
       }
- );
+    });
+
+
+    var color = {
+              "Edges":"#A5ABB6",
+              "Ip":"#FF756E",
+              "Domain":"#DE9BF9"
+            }
+
+    var count = {
+              "Count":0,
+              "Relation":0,
+              "Ip":0,
+              "Domain":0
+            }
+    //
+    // Get Neo4j JSON and parse it
+    //
+    sigma.parsers.json(
+       '/neo4jJson',
+       s,
+       function() {
+           var i,
+           nodes = s.graph.nodes();
+           edges = s.graph.edges();
+           len_nodes = nodes.length;
+           len_edges = edges.length;
+
+           for (i = 0; i < len_nodes; i++) {
+              count["Count"] += 1;
+               nodes[i].label = nodes[i].properties['value']
+
+               if(nodes[i].labels[0] == "Ip"){
+                 nodes[i].color = color.Ip
+                 count["Ip"] += 1;
+               }
+               else if (nodes[i].labels[0] == "Domain") {
+                 nodes[i].color = color.Domain
+                 count["Domain"] += 1;
+               }
+
+               nodes[i].size = s.graph.degree(nodes[i].id);
+
+           }
+
+           for (i = 0; i < len_edges; i++) {
+               edges[i].label = edges[i].type
+               edges[i].size = 0.2
+               edges[i].color = color.Edges
+               count['Relation'] += 1;
+           }
+
+           // Refresh the display:
+           s.refresh();
+
+           // ForceAtlas Layout
+           s.startForceAtlas2({gravity:100,scalingRatio:70,slowDown:1000000});
+           setTimeout(function(){s.stopForceAtlas2();},1000);
+
+           cornerSidebarRelations = '<div>Relation('+count["Relation"]+')</div>'
+           $("#corner-sidebar-relations").html(cornerSidebarRelations);
+           
+           cornerSidebarNodes = '<div>*('+count["Count"]+')</div>'
+           cornerSidebarNodes += '<div>Ip('+count["Ip"]+')</div>'
+           cornerSidebarNodes += '<div>Domain('+count["Domain"]+')</div>'
+           $("#corner-sidebar-nodes").html(cornerSidebarNodes);
+         }
+    );
 
 
 
- //
- // Initialize the dragNodes plugin
- //
- var dragListener = sigma.plugins.dragNodes(s, s.renderers[0]);
+// Instanciate the ActiveState plugin:
+var activeState = sigma.plugins.activeState(s);
+// Initialize the dragNodes plugin:
+var dragListener = sigma.plugins.dragNodes(s, s.renderers[0], activeState);
+// Initialize the Select plugin:
+//var select = sigma.plugins.select(s, activeState);
+// Initialize the Keyboard plugin:
+//var keyboard = sigma.plugins.keyboard(s, s.renderers[0]);
+// Bind the Keyboard plugin to the Select plugin:
+//select.bindKeyboard(keyboard);
 
 
-
- //
- // Get Actions Listing table JSON
- //
+//
+// Get Actions Listing table JSON
+//
 var actionsListing;
 ajax_function("getActionListing","GET", false, "").done(function(json) {
-  actionsListing = json;
+ actionsListing = json;
+});
+//
+// Write properties and actions on sidebar
+//
+s.bind('clickNode', function(e) {
+  node_selected = e.data.node
+  var nodeIdx = e.data.node.id;
+  var nodes = s.graph.nodes();
+  nodes.forEach(function(node){
+    if (nodeIdx === node.id) {
+      var properties = node.labels[0]+"<br>"
+      for (var i in node.properties){
+          properties+=i+": "+node.properties[i]+"<br>"
+      }
+      var type = node.labels[0].toLowerCase();
+      var actions = "";
+      for (var row in actionsListing[type]) {
+        actions += '<button type="button" id="button-actions" class="btn btn-primary" data-toggle="modal" value='+actionsListing[type][row]+'>'+actionsListing[type][row]+'</button>'
+        actions += '<br><br>'
+      }
+      var output = properties+"<br><br><h3>Actions</h3>"+actions
+      $("#side-description").html(output);
+    }
+  });
 });
 
 
- //
- // Write properties and actions on sidebar
- //
- s.bind('clickNode', function(e) {
-   node_selected = e.data.node
-   var nodeIdx = e.data.node.id;
-   var nodes = s.graph.nodes();
-   nodes.forEach(function(node){
-     if (nodeIdx === node.id) {
-       var properties = node.labels[0]+"<br>"
-       for (var i in node.properties){
-           properties+=i+": "+node.properties[i]+"<br>"
-       }
-       var type = node.labels[0].toLowerCase();
-       var actions = "";
-       for (var row in actionsListing[type]) {
-         actions += '<button type="button" id="button-actions" class="btn btn-primary" data-toggle="modal" value='+actionsListing[type][row]+'>'+actionsListing[type][row]+'</button>'
-         actions += '<br><br>'
-       }
-       var output = properties+"<br><br><h3>Actions</h3>"+actions
-       $("#side-description").html(output);
+
+ $(document).on('click', '#button-actions', function() {
+   ajax_function("action","GET", "action="+$(this).val()+"&input="+node_selected.label).done(function(data) {
+     var result = ""
+     json_result = JSON.parse(data).json_result['0']
+     for (var key in json_result) {
+         result += key+": "+json_result[key]+"<br>"
      }
+     $("#modal-actions-content").html(result);
+     $('#modal-actions').modal('show')
    });
  });
-
-
-
-  $(document).on('click', '#button-actions', function() {
-    ajax_function("action","GET", "action="+$(this).val()+"&input="+node_selected.label).done(function(data) {
-      var result = ""
-      json_result = JSON.parse(data).json_result['0']
-      for (var key in json_result) {
-          result += key+": "+json_result[key]+"<br>"
-      }
-      $("#modal-actions-content").html(result);
-      $('#modal-actions').modal('show')
-    });
-
-  });
-
-
-  $body = $("body");
-  $(document).on({
-      ajaxStart: function() { $body.addClass("loading");    },
-      ajaxStop: function() { $body.removeClass("loading"); }
-  });
-
+ $body = $("body");
+ $(document).on({
+     ajaxStart: function() { $body.addClass("loading");    },
+     ajaxStop: function() { $body.removeClass("loading"); }
+ });
 
 
 
 
 
 </script>
+
 
 <div id="modal-actions" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
   <div class="modal-dialog modal-lg" role="document">
