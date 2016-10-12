@@ -46,17 +46,13 @@
 <script src="/static/linkurious/src/misc/sigma.misc.drawHovers.js"></script>
 <script src="/static/linkurious/plugins/sigma.plugins.dragNodes/settings.js"></script>
 <script src="/static/linkurious/plugins/sigma.plugins.dragNodes/sigma.plugins.dragNodes.js"></script>
-
 <script src="/static/linkurious/plugins/sigma.parsers.json/sigma.parsers.json.js"></script>
-
 <script src="/static/linkurious/plugins/sigma.layouts.forceAtlas2/worker.js"></script>
 <script src="/static/linkurious/plugins/sigma.layouts.forceAtlas2/supervisor.js"></script>
-
 <script src="/static/linkurious/plugins/sigma.helpers.graph/sigma.helpers.graph.js"></script>
 <script src="/static/linkurious/plugins/sigma.plugins.activeState/sigma.plugins.activeState.js"></script>
 <script src="/static/linkurious/plugins/sigma.plugins.select/sigma.plugins.select.js"></script>
 <script src="/static/linkurious/plugins/sigma.plugins.keyboard/sigma.plugins.keyboard.js"></script>
-
 <script src="/static/linkurious/plugins/sigma.renderers.linkurious/settings.js"></script>
 <script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.labels.def.js"></script>
 <script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.hovers.def.js"></script>
@@ -70,15 +66,19 @@
 <script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.edges.curve.js"></script>
 <script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.edges.arrow.js"></script>
 <script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.edges.curvedArrow.js"></script>
-
 <link rel="stylesheet" type="text/css" href="/static/ajaxload.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="/static/graph.css" media="screen" />
 
-  <div id="graph-container"></div>
-  <div id="corner-sidebar-relations"></div>
-  <div id="corner-sidebar-nodes"></div>
+
+
+{% extends "index.html" %}
+{% block content %}
+<div id="graph-container">
 </div>
-<script>
 
+
+
+<script>
 var node_selected;
  //
  //
@@ -195,15 +195,15 @@ var i,
            s.startForceAtlas2({gravity:100,scalingRatio:70,slowDown:1000000});
            setTimeout(function(){s.stopForceAtlas2();},1000);
 
-           cornerSidebarRelations = '<div>Relation('+count["Relation"]+')</div>'
-           $("#corner-sidebar-relations").html(cornerSidebarRelations);
-           
-           cornerSidebarNodes = '<div>*('+count["Count"]+')</div>'
-           cornerSidebarNodes += '<div>Ip('+count["Ip"]+')</div>'
-           cornerSidebarNodes += '<div>Domain('+count["Domain"]+')</div>'
-           $("#corner-sidebar-nodes").html(cornerSidebarNodes);
+           cornerSidebarRelations = '<ul><li><a href="#">Relation('+count["Relation"]+')</a></li>'
+
+           cornerSidebarNodes = '<li><a href="#">Nodes('+count["Count"]+')</a></li>'
+           cornerSidebarNodes += '<li><a href="#">Ip('+count["Ip"]+')</a></li>'
+           cornerSidebarNodes += '<li><a href="#">Domain('+count["Domain"]+')</a></li></ul>'
+           $("#cornerbottomright").html(cornerSidebarRelations+cornerSidebarNodes);
          }
     );
+
 
 
 
@@ -212,11 +212,11 @@ var activeState = sigma.plugins.activeState(s);
 // Initialize the dragNodes plugin:
 var dragListener = sigma.plugins.dragNodes(s, s.renderers[0], activeState);
 // Initialize the Select plugin:
-//var select = sigma.plugins.select(s, activeState);
+var select = sigma.plugins.select(s, activeState);
 // Initialize the Keyboard plugin:
-//var keyboard = sigma.plugins.keyboard(s, s.renderers[0]);
+var keyboard = sigma.plugins.keyboard(s, s.renderers[0]);
 // Bind the Keyboard plugin to the Select plugin:
-//select.bindKeyboard(keyboard);
+select.bindKeyboard(keyboard);
 
 
 //
@@ -242,8 +242,7 @@ s.bind('clickNode', function(e) {
       var type = node.labels[0].toLowerCase();
       var actions = "";
       for (var row in actionsListing[type]) {
-        actions += '<button type="button" id="button-actions" class="btn btn-primary" data-toggle="modal" value='+actionsListing[type][row]+'>'+actionsListing[type][row]+'</button>'
-        actions += '<br><br>'
+        actions += '<li><a href="#"><p id="button-actions" value='+actionsListing[type][row]+'>'+actionsListing[type][row]+'</p></a></li>'
       }
       var output = properties+"<br><br><h3>Actions</h3>"+actions
       $("#side-description").html(output);
@@ -262,6 +261,7 @@ s.bind('clickNode', function(e) {
      }
      $("#modal-actions-content").html(result);
      $('#modal-actions').modal('show')
+     $(".modal-backdrop").removeClass();
    });
  });
  $body = $("body");
@@ -277,13 +277,31 @@ s.bind('clickNode', function(e) {
 </script>
 
 
-<div id="modal-actions" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
-  <div class="modal-dialog modal-lg" role="document">
-      <div id="modal-actions-content" class="modal-content">
+
+<div id="modal-actions" class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="myModalLabel">Result</h4>
       </div>
+      <div id="modal-actions-content" class="modal-body">
+      </div>
+      <div class="modal-footer">
+        <div class="divider"></div>
+        <div class="right-side">
+            <button type="button" class="btn btn-default btn-simple" data-dismiss="modal">Ok</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
 
 
+
 <div class="ajaxload"></div>
+
+
+
+{% endblock content %}
