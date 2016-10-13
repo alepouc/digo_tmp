@@ -22,7 +22,6 @@ def convertNeo4jJsonToSigma(neo4jJson):
     '''
     Convert Neo4j JSON to Sigma JSON
     '''
-
     nodes_j = []
     edges_j = []
 
@@ -53,6 +52,11 @@ def convertNeo4jJsonToSigma(neo4jJson):
     for item in SigmaJSON["nodes"]:
         item['x'] = random.random()
         item['y'] = random.random()
+        item['label'] = item.pop("labels")
+        Properties = item['properties']
+        Label = item['label']
+        item['label'] = Properties['type']
+        item['properties']['type'] = Label[0]
 
 
     for item in SigmaJSON["edges"]:
@@ -88,13 +92,34 @@ def get_neo4jJson():
     #query = 'MATCH p=shortestPath( (bacon:Person {name:"Kevin Bacon"})-[*]-(meg:Person {name:"Meg Ryan"}) ) RETURN p'
     #query = 'MATCH (people:Person)-[relatedTo]-(:Movie {title: "Cloud Atlas"}) RETURN people.name, Type(relatedTo), relatedTo'
     #query = 'MATCH (n) RETURN n'
-    query = 'MATCH (n)-[r]-(m) RETURN n, r, m limit 20'
+    #query = 'MATCH (n)-[r]-(m) RETURN n, r, m limit 20'
+    query = 'MATCH (n) RETURN n'
     results = gdb.query(query, data_contents=True)
-    if results:
-        SigmaJSON = convertNeo4jJsonToSigma(results.graph)
-        return SigmaJSON
-    else:
-        return "Error"
+    SigmaJSON = convertNeo4jJsonToSigma(results.graph)
+    return SigmaJSON
+
+
+
+@app.route('/add_node', methods=['POST'])
+def add_node():
+    Type = request.form["type"]
+    Value = request.form["value"]
+    new_ip = gdb.nodes.create(type=Value)
+    new_ip.labels.add(Type)
+    return "Node added"
+
+
+
+@app.route('/add_node_properties')
+def add_node_properties():
+    Value = request.args.get('value')
+    Property_key = request.args.get('property_key')
+    Property_value = request.args.get('property_value')
+    query = 'MATCH (n) WHERE n.type = "'+Value+'" RETURN Id(n)'
+    Id = gdb.query(query, data_contents=True)
+    n = gdb.nodes.get(Id.rows[0][0])
+    n.set(Property_key, Property_value)
+    return "Property added to the node"
 
 
 
@@ -108,6 +133,20 @@ def getActionListing():
         action = row.split("_")[1]
         result_json[action_type].append(action)
     return jsonify(result_json)
+
+
+
+@app.route("/getNodeTypeListing")
+def getNodeTypeListing():
+    '''
+    Get available type
+    '''
+    output = {}
+    query = 'START n=node(*) RETURN distinct labels(n)'
+    results = gdb.query(query, data_contents=True)
+    for row in results.rows:
+        output[row[0][0]]=row[0][0]
+    return jsonify(output)
 
 
 

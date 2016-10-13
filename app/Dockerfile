@@ -6,4 +6,4 @@ RUN pip install -r /srv/webapp/requirements.txt
 
 #ADD webapp/ /srv/webapp/
 EXPOSE 5000
-CMD ["/srv/webapp/web.py"]
+CMD ["/srv/webapp/digo.py"]
