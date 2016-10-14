@@ -67,13 +67,17 @@
 <script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.edges.arrow.js"></script>
 <script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.edges.curvedArrow.js"></script>
 <script src="/static/linkurious/plugins/sigma.plugins.tooltips/sigma.plugins.tooltips.js"></script>
-<link rel="stylesheet" type="text/css" href="/static/ajaxload.css" media="screen" />
+
 <link rel="stylesheet" type="text/css" href="/static/graph.css" media="screen" />
-
-
+<script src="/static/assets/js/jquery-2.1.4.min.js"></script>
+<link href="/static/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+<script src="/static/assets/js/bootstrap.min.js"></script>
+<link href="/static/assets/css/bootstrap-dialog.min.css" rel="stylesheet" type="text/css" />
+<script src="/static/assets/js/bootstrap-dialog.min.js"></script>
 
 {% extends "index.html" %}
 {% block content %}
+
 
 <!-- #################################################################### -->
 <!--  Used for showing the loading gif  -->
@@ -177,8 +181,8 @@ var i,
             actions = "";
             type = node['properties']['type'].toLowerCase();
             var actions = "";
-            for (var row in actionsListing[type]) {
-              actions += '<tr><th></th><td><a href="#" id="link-actions">'+actionsListing[type][row]+'</a></td></tr>'
+            for (var row in all_actions[type]) {
+              actions += '<tr><th></th><td><a href="#" id="link-actions">'+all_actions[type][row]+'</a></td></tr>'
             }
             output = '<div class="arrow"></div>' +
             ' <div class="sigma-tooltip-header">Actions available</div>' +
@@ -292,9 +296,9 @@ var tooltips = sigma.plugins.tooltips(s, s.renderers[0], config);
 <!--  Get the whole list of actions available  -->
 <!-- #################################################################### -->
 <script>
-var actionsListing;
-ajax_function("getActionListing","GET", false, "").done(function(json) {
- actionsListing = json;
+var all_actions;
+ajax_function("get_all_actions","GET", false, "").done(function(json) {
+ all_actions = json;
 });
 </script>
 
@@ -303,9 +307,9 @@ ajax_function("getActionListing","GET", false, "").done(function(json) {
 <!--  Get the whole list of types  -->
 <!-- #################################################################### -->
 <script>
-var nodetypelisting;
-ajax_function("getNodeTypeListing","GET", false, "").done(function(data) {
- nodetypelisting = data;
+var all_types;
+ajax_function("get_all_types","GET", false, "").done(function(data) {
+ all_types = data;
 });
 </script>
 
@@ -356,7 +360,7 @@ $(document).on('click', '#link-actions', function() {
 <script>
 $(document).on('click', '#add_node', function() {
   output = ""
-  for (var row in nodetypelisting) {
+  for (var row in all_types) {
     output += '<li><a href="#">'+row+'</a></li>'
   }
   $("#modal-add_node-content").html(output);
@@ -373,6 +377,37 @@ $(document).on('click', '#submit_add_note', function() {
   ajax_function("add_node","POST", 'type='+$(".btn-select").text().replace(/\s+/g, '')+'&value='+$('#message-text').val()).done(function(json) {
   });
 });
+
+
+
+
+BootstrapDialog.show({
+  title: 'New node',
+  message: 'Add new node!',
+  buttons: [{
+    icon: 'glyphicon glyphicon-send',
+    label: 'Add new node',
+    cssClass: 'btn-primary',
+    autospin: true,
+    action: function(dialogRef){
+      dialogRef.enableButtons(false);
+      dialogRef.setClosable(false);
+      dialogRef.getModalBody().html('Dialog closes in 5 seconds.');
+      setTimeout(function(){
+        dialogRef.close();
+      }, 5000);
+    }
+  }, {
+    label: 'Close',
+    action: function(dialogRef){
+    dialogRef.close();
+    }
+  }]
+});
+
+
+
+
 
 
 </script>
@@ -400,7 +435,7 @@ $(document).on('click', '#submit_add_note', function() {
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary" id="submit_add_note">Add node</button>
       </div>
     </div>

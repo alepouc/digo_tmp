@@ -123,8 +123,8 @@ def add_node_properties():
 
 
 
-@app.route('/getActionListing')
-def getActionListing():
+@app.route('/get_all_actions')
+def get_all_actions():
     files = glob('actions/*')
     result_json = defaultdict(list)
 
@@ -136,8 +136,8 @@ def getActionListing():
 
 
 
-@app.route("/getNodeTypeListing")
-def getNodeTypeListing():
+@app.route("/get_all_types")
+def get_all_types():
     '''
     Get available type
     '''
