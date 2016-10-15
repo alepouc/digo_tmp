@@ -92,8 +92,8 @@ def get_neo4jJson():
     #query = 'MATCH p=shortestPath( (bacon:Person {name:"Kevin Bacon"})-[*]-(meg:Person {name:"Meg Ryan"}) ) RETURN p'
     #query = 'MATCH (people:Person)-[relatedTo]-(:Movie {title: "Cloud Atlas"}) RETURN people.name, Type(relatedTo), relatedTo'
     #query = 'MATCH (n) RETURN n'
-    #query = 'MATCH (n)-[r]-(m) RETURN n, r, m limit 20'
-    query = 'MATCH (n) RETURN n'
+    query = 'MATCH (n) OPTIONAL MATCH (n)-[r]-() return n,r'
+    #query = 'MATCH (n) RETURN n'
     results = gdb.query(query, data_contents=True)
     SigmaJSON = convertNeo4jJsonToSigma(results.graph)
     return SigmaJSON
@@ -102,6 +102,7 @@ def get_neo4jJson():
 
 @app.route('/add_node', methods=['POST'])
 def add_node():
+    time.sleep(2)
     Type = request.form["type"]
     Value = request.form["value"]
     new_ip = gdb.nodes.create(type=Value)
@@ -110,16 +111,27 @@ def add_node():
 
 
 
-@app.route('/add_node_properties')
+@app.route('/add_node_properties', methods=['POST'])
 def add_node_properties():
-    Value = request.args.get('value')
-    Property_key = request.args.get('property_key')
-    Property_value = request.args.get('property_value')
+    time.sleep(2)
+    Value = request.form['value']
+    Property_key = request.form['property_key']
+    Property_value = request.form['property_value']
     query = 'MATCH (n) WHERE n.type = "'+Value+'" RETURN Id(n)'
     Id = gdb.query(query, data_contents=True)
     n = gdb.nodes.get(Id.rows[0][0])
     n.set(Property_key, Property_value)
     return "Property added to the node"
+
+
+
+@app.route('/delete_node', methods=['POST'])
+def delete_node():
+    time.sleep(2)
+    Id = request.form["id"]
+    query = 'START n=node('+Id+') OPTIONAL MATCH (n)-[r]-() DELETE n,r'
+    Id = gdb.query(query)
+    return "Node delete"
 
 
 
@@ -145,7 +157,7 @@ def get_all_types():
     query = 'START n=node(*) RETURN distinct labels(n)'
     results = gdb.query(query, data_contents=True)
     for row in results.rows:
-        output[row[0][0]]=row[0][0]
+        output[row[0][0]]=row[0][0].lower()
     return jsonify(output)
 
 

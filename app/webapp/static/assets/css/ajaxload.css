@@ -28,3 +28,17 @@ body.loading {
 body.loading .ajaxload {
     display: block;
 }
+
+
+/*
+.ajaxload {
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  background: url('http://sampsonresume.com/labs/pIkfp.gif') 50% 50% no-repeat;
+}
+
+*/

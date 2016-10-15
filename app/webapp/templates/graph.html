@@ -68,44 +68,27 @@
 <script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.edges.curvedArrow.js"></script>
 <script src="/static/linkurious/plugins/sigma.plugins.tooltips/sigma.plugins.tooltips.js"></script>
 
-<link rel="stylesheet" type="text/css" href="/static/graph.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="/static/assets/css/graph.css" media="screen" />
 <script src="/static/assets/js/jquery-2.1.4.min.js"></script>
 <link href="/static/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
 <script src="/static/assets/js/bootstrap.min.js"></script>
 <link href="/static/assets/css/bootstrap-dialog.min.css" rel="stylesheet" type="text/css" />
 <script src="/static/assets/js/bootstrap-dialog.min.js"></script>
+<link href="/static/assets/css/ajaxload.css" rel="stylesheet" type="text/css" />
 
 {% extends "index.html" %}
 {% block content %}
 
-
 <!-- #################################################################### -->
-<!--  Used for showing the loading gif  -->
+<!--  Global variables  -->
 <!-- #################################################################### -->
 <script>
-
-$body = $("body");
-$(document).on({
-    ajaxStart: function() { $body.addClass("loading");    },
-    ajaxStop: function() { $body.removeClass("loading"); }
-});
-
-ajax_function = function(uri, method, data, async) {
-  var request = {
-      url: uri,
-      type: method,
-      //contentType: "application/json",
-      //accepts: "application/json",
-      cache: false,
-      async: true,
-      dataType: 'json',
-      data: data,
-  };
-  return $.ajax(request);
-}
+var all_types;
+var all_actions;
+var node_selected = {};
 
 </script>
-<div class="ajaxload"></div>
+
 
 
 
@@ -115,7 +98,6 @@ ajax_function = function(uri, method, data, async) {
 <div id="graph-container">
 </div>
 <script>
-var node_selected = {};
 var i,
     s,
     N = 100,
@@ -167,7 +149,10 @@ var i,
           '      <tr><th>Value: </th> <td>'+node.label+'</td></tr>' +
           '    </table>' +
           '  </div>' +
-          '  <div class="sigma-tooltip-footer">Number of connections: '+node.degree+'</div>'
+          '  <div class="sigma-tooltip-footer">Number of connections: '+node.degree+'</div>' +
+          '  <div class="sigma-tooltip-footer">' +
+          '   <button type="button" id="delete_node" value="'+node.id+'">Delete Node</button>' +
+          '  </div>'
           return output
         }
 
@@ -218,17 +203,20 @@ var i,
 <!-- #################################################################### -->
 
 <script>
+
+function sigma_json_parser(){
+
     var color = {
-              "Edges":"#A5ABB6",
-              "Ip":"#FF756E",
-              "Domain":"#DE9BF9"
+              "edges":"#A5ABB6",
+              "ip":"#FF756E",
+              "domain":"#DE9BF9"
             }
 
     var count = {
-              "Count":0,
-              "Relation":0,
-              "Ip":0,
-              "Domain":0
+              "count":0,
+              "relation":0,
+              "ip":0,
+              "domain":0
             }
 
     //
@@ -245,14 +233,14 @@ var i,
            len_edges = edges.length;
 
            for (i = 0; i < len_nodes; i++) {
-              count["Count"] += 1;
-               if(nodes[i].properties['type'] == "Ip"){
-                 nodes[i].color = color.Ip
-                 count["Ip"] += 1;
+              count["count"] += 1;
+               if(nodes[i].properties['type'] == "ip"){
+                 nodes[i].color = color.ip
+                 count["ip"] += 1;
                }
-               else if (nodes[i].properties['type']== "Domain") {
-                 nodes[i].color = color.Domain
-                 count["Domain"] += 1;
+               else if (nodes[i].properties['type']== "domain") {
+                 nodes[i].color = color.domain
+                 count["domain"] += 1;
                }
                nodes[i].size = s.graph.degree(nodes[i].id);
            }
@@ -260,8 +248,8 @@ var i,
            for (i = 0; i < len_edges; i++) {
                edges[i].label = edges[i].type
                edges[i].size = 0.2
-               edges[i].color = color.Edges
-               count['Relation'] += 1;
+               edges[i].color = color.edges
+               count['relation'] += 1;
            }
 
            // Refresh the display:
@@ -271,24 +259,81 @@ var i,
            s.startForceAtlas2({gravity:100,scalingRatio:70,slowDown:1000000});
            setTimeout(function(){s.stopForceAtlas2();},1000);
 
-           cornerSidebarRelations = '<ul><li><a href="#">Relation('+count["Relation"]+')</a></li>'
+           cornerSidebarRelations = '<ul><li><a href="#">Relation('+count["relation"]+')</a></li>'
 
-           cornerSidebarNodes = '<li><a href="#">Nodes('+count["Count"]+')</a></li>'
-           cornerSidebarNodes += '<li><a href="#">Ip('+count["Ip"]+')</a></li>'
-           cornerSidebarNodes += '<li><a href="#">Domain('+count["Domain"]+')</a></li></ul>'
+           cornerSidebarNodes = '<li><a href="#">Nodes('+count["count"]+')</a></li>'
+           cornerSidebarNodes += '<li><a href="#">Ip('+count["ip"]+')</a></li>'
+           cornerSidebarNodes += '<li><a href="#">Domain('+count["domain"]+')</a></li></ul>'
            $("#cornerbottomright").html(cornerSidebarRelations+cornerSidebarNodes);
          }
     );
 
-// Instanciate the ActiveState plugin:
-var activeState = sigma.plugins.activeState(s);
-// Initialize the dragNodes plugin:
-var dragListener = sigma.plugins.dragNodes(s, s.renderers[0], activeState);
+    // Instanciate the ActiveState plugin:
+    var activeState = sigma.plugins.activeState(s);
+    // Initialize the dragNodes plugin:
+    var dragListener = sigma.plugins.dragNodes(s, s.renderers[0], activeState);
 
-// Instanciate the tooltips plugin with a Mustache renderer for node tooltips:
-var tooltips = sigma.plugins.tooltips(s, s.renderers[0], config);
+    // Instanciate the tooltips plugin with a Mustache renderer for node tooltips:
+    var tooltips = sigma.plugins.tooltips(s, s.renderers[0], config);
+
+}
+
+sigma_json_parser()
 
 </script>
+
+
+
+
+
+<!-- #################################################################### -->
+<!--  Refresh function  -->
+<!-- #################################################################### -->
+<script>
+
+function refresh_graph(){
+  ajax_function("get_all_actions","GET", false, "").done(function(json) {
+   all_actions = json;
+  });
+  ajax_function("get_all_types","GET", false, "").done(function(data) {
+   all_types = data;
+  });
+  s.refresh()
+}
+
+</script>
+
+
+
+<!-- #################################################################### -->
+<!--  Used for showing the loading gif  -->
+<!-- #################################################################### -->
+<script>
+
+
+$body = $("body");
+$(document).on({
+    ajaxStart: function() { $body.addClass("loading");    },
+    ajaxStop: function() { $body.removeClass("loading"); }
+});
+
+ajax_function = function(uri, method, data, async) {
+  var request = {
+      url: uri,
+      type: method,
+      //contentType: "application/json",
+      //accepts: "application/json",
+      cache: false,
+      async: true,
+      dataType: 'json',
+      data: data,
+  };
+  return $.ajax(request);
+}
+
+</script>
+<div class="ajaxload"></div>
+
 
 
 
@@ -296,7 +341,6 @@ var tooltips = sigma.plugins.tooltips(s, s.renderers[0], config);
 <!--  Get the whole list of actions available  -->
 <!-- #################################################################### -->
 <script>
-var all_actions;
 ajax_function("get_all_actions","GET", false, "").done(function(json) {
  all_actions = json;
 });
@@ -307,21 +351,19 @@ ajax_function("get_all_actions","GET", false, "").done(function(json) {
 <!--  Get the whole list of types  -->
 <!-- #################################################################### -->
 <script>
-var all_types;
 ajax_function("get_all_types","GET", false, "").done(function(data) {
- all_types = data;
+ all_types = data
 });
 </script>
 
 
 
 <!-- #################################################################### -->
-<!--  Modal when receiving result from any action -->
+<!--  Modal when receiving result from an action -->
 <!-- #################################################################### -->
 <script>
 $(document).on('click', '#link-actions', function() {
   ajax_function("action","GET", "action="+$(this).text()+"&input="+node_selected.label).done(function(data) {
-    console.log(node_selected)
     var result = ""
     json_result = JSON.parse(data).json_result['0']
     for (var key in json_result) {
@@ -354,18 +396,84 @@ $(document).on('click', '#link-actions', function() {
 
 
 
+
+
+<!-- #################################################################### -->
+<!--  Delete node -->
+<!-- #################################################################### -->
+<script>
+
+$(document).on('click', '#delete_node', function() {
+  BootstrapDialog.confirm({
+    title: 'WARNING',
+    message: 'Are you sure you want to delete the node ?',
+    type: BootstrapDialog.TYPE_DANGER,
+    closable: true,
+    draggable: true,
+    btnCancelLabel: 'Cancel!',
+    btnOKLabel: 'Delete!',
+    btnOKClass: 'btn-warning',
+    callback: function(result) {
+        if(result) {
+          ajax_function("delete_node","POST", 'id='+$("#delete_node").val()).complete(function(json) {
+            refresh_graph();
+            sigma_json_parser();
+          });
+        }
+    }
+  });
+});
+</script>
+
+
 <!-- #################################################################### -->
 <!--  Modal when adding a node -->
 <!-- #################################################################### -->
 <script>
 $(document).on('click', '#add_node', function() {
-  output = ""
-  for (var row in all_types) {
-    output += '<li><a href="#">'+row+'</a></li>'
-  }
-  $("#modal-add_node-content").html(output);
-  $('#modal-add_node').modal('show')
-  $(".modal-backdrop").removeClass();
+  BootstrapDialog.show({
+    title: 'New node',
+    draggable: true,
+    message: function(dialog){
+      var output = "";
+      for (var row in all_types) {
+          output += '<option data-value="'+row+'" value="'+row+'"  />';
+      }
+      var $message = $(`
+      <form>
+        <div class="form-group">
+          <label class="control-label">Type:</label>
+          <div class="btn-group dropdown">
+            <input list="types" type="search" placeholder="Pick a type ..." id="modal-add_node-content">
+            <datalist id="types">`+output+`</datalist>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="control-label">Value:</label>
+          <textarea class="form-control" id="message-text"></textarea>
+        </div>
+      </form>
+      `);
+      return $message;
+    },
+    buttons: [{
+      icon: 'glyphicon glyphicon-send',
+      label: 'Add new node',
+      cssClass: 'btn-primary',
+      action: function(dialogRef){
+        dialogRef.close();
+        ajax_function("add_node","POST", 'type='+$('#types [value="' + $('#modal-add_node-content').val() + '"]').data('value')+'&value='+$('#message-text').val()).complete(function(json) {
+          refresh_graph();
+          sigma_json_parser()
+        });
+      }
+    }, {
+      label: 'Close',
+      action: function(dialogRef){
+      dialogRef.close();
+      }
+    }]
+  });
 });
 
 $(document).on('click', '.dropdown-menu li a', function() {
@@ -373,74 +481,15 @@ $(document).on('click', '.dropdown-menu li a', function() {
   $(this).parents('.btn-group').find('.dropdown-toggle').html(selText+' <span class="caret"></span>');
 });
 
-$(document).on('click', '#submit_add_note', function() {
-  ajax_function("add_node","POST", 'type='+$(".btn-select").text().replace(/\s+/g, '')+'&value='+$('#message-text').val()).done(function(json) {
-  });
-});
-
-
-
-
-BootstrapDialog.show({
-  title: 'New node',
-  message: 'Add new node!',
-  buttons: [{
-    icon: 'glyphicon glyphicon-send',
-    label: 'Add new node',
-    cssClass: 'btn-primary',
-    autospin: true,
-    action: function(dialogRef){
-      dialogRef.enableButtons(false);
-      dialogRef.setClosable(false);
-      dialogRef.getModalBody().html('Dialog closes in 5 seconds.');
-      setTimeout(function(){
-        dialogRef.close();
-      }, 5000);
-    }
-  }, {
-    label: 'Close',
-    action: function(dialogRef){
-    dialogRef.close();
-    }
-  }]
-});
-
-
-
-
-
-
 </script>
 
-<div class="modal fade" id="modal-add_node" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title">New node</h4>
-      </div>
-      <div class="modal-body">
-        <form>
-          <div class="form-group">
-            <label for="recipient-name" class="control-label">Type:</label>
-            <div class="btn-group">
-              <a class="btn dropdown-toggle btn-select" data-toggle="dropdown" href="#">Select type <span class="caret"></span></a>
-              <ul class="dropdown-menu" id="modal-add_node-content"></ul>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="message-text" class="control-label">Value:</label>
-            <textarea class="form-control" id="message-text"></textarea>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" id="submit_add_note">Add node</button>
-      </div>
-    </div>
-  </div>
-</div>
-
+<script type="text/javascript">
+$(function(){
+    $('#input').change(function(){
+        var abc = $("#types option[value='" + $('#input').val() + "']").attr('data-id');
+        alert(abc);
+    });
+});
+</script>
 
 {% endblock content %}
