@@ -1,88 +1,15 @@
 #graph-container {
-  position: relative;
-  width: 100%;
-  height:89%;
+    position: relative;
+    margin-top: 45px;
+    height: 89%;
+    width: 100%;
 }
-@media (max-height: 1174px) {
+@media (max-height: 700px) {
   #graph-container {
-    width: 98%;
+    width: 100%;
     height:88%;
   }
 }
-@media (max-height: 1080px) {
-  #graph-container {
-    width: 98%;
-    height:87%;
-  }
-}
-@media (max-height: 990px) {
-  #graph-container {
-    width: 98%;
-    height:86%;
-  }
-}
-@media (max-height: 890px) {
-  #graph-container {
-    width: 98%;
-    height:84%;
-  }
-}
-@media (max-height: 810px) {
-  #graph-container {
-    width: 98%;
-    height:82%;
-  }
-}
-@media (max-height: 720px) {
-  #graph-container {
-    width: 98%;
-    height:80%;
-  }
-}
-@media (max-height: 650px) {
-  #graph-container {
-    width: 98%;
-    height:78%;
-  }
-}
-@media (max-height: 590px) {
-  #graph-container {
-    width: 98%;
-    height:76%;
-  }
-}
-@media (max-height: 556px) {
-  #graph-container {
-    width: 98%;
-    height:74%;
-  }
-}
-@media (max-height: 520px) {
-  #graph-container {
-    width: 98%;
-    height:72%;
-  }
-}
-@media (max-height: 470px) {
-  #graph-container {
-    width: 98%;
-    height:70%;
-  }
-}
-@media (max-height: 445px) {
-  #graph-container {
-    width: 98%;
-    height:68%;
-  }
-}
-@media (max-height: 415px) {
-  #graph-container {
-    width: 98%;
-    height:66%;
-  }
-}
-
-
 
 #graph-div {
     padding: 5px 3px;
@@ -162,4 +89,14 @@
   margin-top: -10px;
   border-right-color: rgb(249, 247, 237);
   border-left-width: 0;
+}
+
+
+#zoomController {
+    right: 0;
+    position: fixed;
+    bottom: 0;
+    padding-bottom: 20px;
+    padding-right: 10px;
+    z-index: 1;
 }

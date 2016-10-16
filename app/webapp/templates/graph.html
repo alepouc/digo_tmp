@@ -67,9 +67,10 @@
 <script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.edges.arrow.js"></script>
 <script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.edges.curvedArrow.js"></script>
 <script src="/static/linkurious/plugins/sigma.plugins.tooltips/sigma.plugins.tooltips.js"></script>
+<script src="/static/linkurious/plugins/sigma.plugins.locate/sigma.plugins.locate.js"></script>
 
 <link rel="stylesheet" type="text/css" href="/static/assets/css/graph.css" media="screen" />
-<script src="/static/assets/js/jquery-2.1.4.min.js"></script>
+<script src="/static/assets/js/jquery-2.2.4.min.js"></script>
 <link href="/static/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
 <script src="/static/assets/js/bootstrap.min.js"></script>
 <link href="/static/assets/css/bootstrap-dialog.min.css" rel="stylesheet" type="text/css" />
@@ -97,6 +98,13 @@ var node_selected = {};
 <!-- #################################################################### -->
 <div id="graph-container">
 </div>
+<div class="btn-group" id="zoomController" role="group" aria-label="zoomController" style="margin-bottom: 20px;">
+    <button type="button" class="btn btn-default" id="zoomIn" title="Zoom In"><i class="fa fa-search-minus"></i></button>
+    <button type="button" class="btn btn-default" id="zoomReset" title="Zoom Reset"><i class="fa fa-compass"></i></button>
+    <button type="button" class="btn btn-default" id="zoomOut" title="Zoom Out"><i class="fa fa-search-plus"></i></button>
+
+</div>
+
 <script>
 var i,
     s,
@@ -115,27 +123,81 @@ var i,
         type: 'canvas'
       },
       settings: {
-        minNodeSize: 8,
-        maxNodeSize: 20,
-        minEdgeSize: 0.1,
-        maxEdgeSize: 1,
-        dragNodeStickiness: 0.01,
+        // Labels:
+        font: 'robotoregular',
+        defaultLabelColor: '#2e2c2d',
+        defaultLabelSize: 8,
+        labelThreshold: 5,
+        defaultEdgeLabelSize: 12,
+        edgeLabelThreshold: 7,
+        labelHoverShadow: '',
+
+        // Edges:
+        edgeColor: 'default',
+        defaultEdgeColor: '#a9a9a9',
+
+        // Nodes:
+        defaultNodeColor: '#333333',
+
+        // Hovered nodes:
+        hoverFontStyle: 'bold',
         borderSize: 2,
-        outerBorderSize: 3,
-        defaultNodeBorderColor: '#fff',
-        defaultNodeOuterBorderColor: 'rgb(236, 81, 72)',
-        edgeHoverHighlightNodes: 'circle',
-        enableEdgeHovering: true,
+        outerBorderSize: 2,
+        nodeBorderColor: 'default',
+        defaultNodeBorderColor: '#ffffff',
+        defaultNodeOuterBorderColor: '#f65565',
         edgeHoverSizeRatio:3,
-        defaultLabelSize:8,
-        zoomingRatio:1.2
+        enableEdgeHovering: true,
+        edgeHoverHighlightNodes: 'circle',
+
+        // Actve nodes and edges:
+        activeFontStyle: 'bold',
+        nodeActiveColor: 'node',
+        defaultNodeActiveColor: '#333333',
+        edgeActiveColor: 'default',
+        defaultEdgeActiveColor: '#f65565',
+        edgeHoverExtremities: true,
+
+        /**
+        * RESCALE SETTINGS:
+        * *****************
+        */
+        minNodeSize: 20,
+        maxNodeSize: 20,
+        minEdgeSize: 0.5,
+        maxEdgeSize: 0.5,
+
+        /**
+        * CAPTORS SETTINGS:
+        * *****************
+        */
+        zoomingRatio: 1.1,
+        doubleClickZoomingRatio: 1,
+        zoomMin: 0.05,
+        zoomMax: 5,
+        doubleClickZoomDuration: 0,
+        mouseWheelEnabled: false,
+
+        /**
+        * GLOBAL SETTINGS:
+        * ****************
+        */
+        doubleClickEnabled: false,
+        enableEdgeHovering: true,
+        edgeHoverPrecision: 10,
+
+
+        dragNodeStickiness: 0.01,
+
+
+
       }
     });
 
 
     var config = {
       node: [{
-        show: 'clickNode',
+        show: 'doubleClickNode',
         position: 'top',
         autoadjust: true,
         renderer: function(node) {
@@ -209,7 +271,9 @@ function sigma_json_parser(){
     var color = {
               "edges":"#A5ABB6",
               "ip":"#FF756E",
-              "domain":"#DE9BF9"
+              "domain":"#DE9BF9",
+              "email": "#68BDF6",
+              "hash": "#6DCE9E"
             }
 
     var count = {
@@ -256,14 +320,14 @@ function sigma_json_parser(){
            s.refresh();
 
            // ForceAtlas Layout
-           s.startForceAtlas2({gravity:100,scalingRatio:70,slowDown:1000000});
+           s.startForceAtlas2({gravity:150,scalingRatio:70,slowDown:1000000});
            setTimeout(function(){s.stopForceAtlas2();},1000);
 
-           cornerSidebarRelations = '<ul><li><a href="#">Relation('+count["relation"]+')</a></li>'
+           cornerSidebarRelations = 'Relation('+count["relation"]+')&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
 
-           cornerSidebarNodes = '<li><a href="#">Nodes('+count["count"]+')</a></li>'
-           cornerSidebarNodes += '<li><a href="#">Ip('+count["ip"]+')</a></li>'
-           cornerSidebarNodes += '<li><a href="#">Domain('+count["domain"]+')</a></li></ul>'
+           cornerSidebarNodes = 'Nodes('+count["count"]+')&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+           cornerSidebarNodes += 'Ip('+count["ip"]+')&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+           cornerSidebarNodes += 'Domain('+count["domain"]+')'
            $("#cornerbottomright").html(cornerSidebarRelations+cornerSidebarNodes);
          }
     );
@@ -490,6 +554,53 @@ $(function(){
         alert(abc);
     });
 });
+
 </script>
+
+
+<!-- #################################################################### -->
+<!--  Zoom -->
+<!-- #################################################################### -->
+<script>
+var zoomOut = function() {
+  sigma.utils.zoomTo(
+      s.camera,
+      0,
+      0,
+      1 / s.settings('zoomingRatio'),
+      { duration: 300 }
+    );
+};
+var zoomIn = function() {
+  sigma.utils.zoomTo(
+      s.camera,
+      0,
+      0,
+      s.settings('zoomingRatio'),
+      { duration: 300 }
+    );
+};
+var zoomCenter = function() {
+  var loc = sigma.plugins.locate(s);
+  loc.center(1);
+};
+
+$(document).ready(function() {
+  $('#zoomIn').on('click',function(e) {
+    e.preventDefault();
+    zoomIn();
+  });
+  $('#zoomOut').on('click',function(e) {
+    e.preventDefault();
+    zoomOut();
+  });
+  $('#zoomReset').on('click',function(e) {
+    e.preventDefault();
+    zoomCenter();
+  });
+});
+</script>
+
+
 
 {% endblock content %}
