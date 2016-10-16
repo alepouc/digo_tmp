@@ -220,28 +220,21 @@ var i,
 
       }, {
           show: 'rightClickNode',
-          cssClass: 'sigma-tooltip',
-          position: 'right',
-          autoadjust: true,
           renderer: function(node) {
             node_selected = node
             actions = "";
             type = node['properties']['type'].toLowerCase();
             var actions = "";
             for (var row in all_actions[type]) {
-              actions += '<tr><th></th><td><a href="#" id="link-actions">'+all_actions[type][row]+'</a></td></tr>'
+              actions += '<p class="pad-all text-lg"><a href="#" id="link-actions">'+all_actions[type][row]+'</a></p>'
             }
-            output = '<div class="arrow"></div>' +
-            ' <div class="sigma-tooltip-header">Actions available</div>' +
-            '  <div class="sigma-tooltip-body">' +
-            '    <table>' +
-                  actions
-            '    </table>' +
-            '  </div>'
-            return output
+            $("#aside-content").html(actions);
+            $.niftyAside('toggleHideShow');
+            return ""
           }
       }],
-      stage: {
+      stage: [
+      {
         renderer: function() {
           output = '<div class="arrow"></div>' +
           ' <div class="sigma-tooltip-header">Menu</div>' +
@@ -253,7 +246,7 @@ var i,
           '  <div class="sigma-tooltip-footer"></div>'
           return output
         }
-      }
+      }]
     };
 
 </script>

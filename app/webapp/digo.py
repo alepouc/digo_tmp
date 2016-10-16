@@ -134,14 +134,14 @@ def delete_node():
     return "Node delete"
 
 
+
 @app.route('/create_relationship', methods=['POST'])
 def create_relationship():
     time.sleep(2)
     id1 = request.form["id1"]
     id2 = request.form["id2"]
-    n1 = gdb.node[id1]
-    n2 = gdb.node[id2]
-    n1.relationships.create("relation", n2)
+    query = 'START a=node('+id1+'), b=node('+id2+') CREATE UNIQUE (a)-[r:relation]->(b)'
+    Id = gdb.query(query)
     return "Relation created"
 
 
