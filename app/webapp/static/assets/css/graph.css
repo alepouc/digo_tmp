@@ -101,3 +101,31 @@
     padding-right: 10px;
     z-index: 1;
 }
+
+
+
+table.modal-action-table {
+  display: block;
+  overflow: auto;
+  font-size: 12px;
+}
+
+th.modal-action-node {
+  width: 7%;
+}
+
+th.modal-action-prop {
+  width: 7%;
+}
+
+th.modal-action-type {
+  width: 21%;
+}
+
+th.modal-action-details {
+  width: 75%;
+}
+
+th, td {
+  border-bottom: 1px solid #ddd;
+}

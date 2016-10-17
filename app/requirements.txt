@@ -1,4 +1,5 @@
 uwsgi
 Flask
 neo4jrestclient
+ipwhois
 python-whois

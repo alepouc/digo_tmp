@@ -226,7 +226,7 @@ var i,
             type = node['properties']['type'].toLowerCase();
             var actions = "";
             for (var row in all_actions[type]) {
-              actions += '<p class="pad-all text-lg"><a href="#" id="link-actions">'+all_actions[type][row]+'</a></p>'
+              actions += '&nbsp;&nbsp;<button class="btn btn-default btn-xs btn-hover-info" id="link-actions">'+all_actions[type][row]+'</button></br></br>'
             }
             $("#aside-content").html(actions);
             $.niftyAside('toggleHideShow');
@@ -420,36 +420,49 @@ ajax_function("get_all_types","GET", false, "").done(function(data) {
 <!-- #################################################################### -->
 <script>
 $(document).on('click', '#link-actions', function() {
-  ajax_function("action","GET", "action="+$(this).text()+"&input="+node_selected.label).done(function(data) {
-    var result = ""
-    json_result = JSON.parse(data).json_result['0']
-    for (var key in json_result) {
-        result += key+": "+json_result[key]+"<br>"
-    }
-    $("#modal-actions-content").html(result);
-    $('#modal-actions').modal('show')
-    $(".modal-backdrop").removeClass();
+  ajax_function("action","GET", "action="+$("#link-actions").text()+"&input="+node_selected.label).done(function(data) {
+    BootstrapDialog.show({
+      size: BootstrapDialog.SIZE_WIDE,
+      title: 'Results',
+      draggable: true,
+      message: function(dialog){
+        var $message = '<table class="modal-action-table"><tr><th class="modal-action-node">Node</th><th class="modal-action-prop">Property</th><th class="modal-action-type">Type</th><th class="modal-action-details">Details</th></tr>'
+        //json_result = JSON.parse(data).json_result['0']
+        json_result = data["json_result"]
+        for (var key in json_result) {
+            $message += '<tr><td><input type="checkbox" name="node[]" value="'+key+';'+json_result[key]+'"></td><td><input type="checkbox" name="prop[]" value="'+key+';'+json_result[key]+'"></td><td><b>'+key+'</b></td><td>'+json_result[key]+'</td></tr>'
+        }
+        $message += "</table>"
+        return $message
+      },
+      buttons: [{
+        icon: 'glyphicon glyphicon-send',
+        label: 'Ok',
+        cssClass: 'btn-primary',
+        action: function(dialogRef){
+          $('input[name="node[]"]:checked').each(function() {
+            console.log("node "+$(this).val() );
+          });
+          $('input[name="prop[]"]:checked').each(function() {
+            console.log("prop "+$(this).val() );
+          });
+        }
+      }, {
+        label: 'Close',
+        action: function(dialogRef){
+        dialogRef.close();
+        }
+      }]
+    });
   });
 });
+
+
+
+
+
+
 </script>
-<div id="modal-actions" class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title" id="myModalLabel">Result</h4>
-      </div>
-      <div id="modal-actions-content" class="modal-body">
-      </div>
-      <div class="modal-footer">
-        <div class="divider"></div>
-        <div class="right-side">
-            <button type="button" class="btn btn-default btn-simple" data-dismiss="modal">Ok</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 
 

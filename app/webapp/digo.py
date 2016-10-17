@@ -145,15 +145,17 @@ def create_relationship():
     return "Relation created"
 
 
+
 @app.route('/get_all_actions')
 def get_all_actions():
     files = glob('actions/*')
     result_json = defaultdict(list)
-
     for row in files:
-        action_type = row.split("_")[0].split("/")[1]
-        action = row.split("_")[1]
-        result_json[action_type].append(action)
+        if ".py" in row:
+            if "__init__.py" not in row:
+                action_type = row.split("_")[0].split("/")[1]
+                action = row.split("/")[1].split(".")[0]
+                result_json[action_type].append(action)
     return jsonify(result_json)
 
 
@@ -176,10 +178,12 @@ def get_all_types():
 def get_actions():
     action = request.args.get('action')
     input = request.args.get('input')
-    result = domain_whois.whois(input)
-    result = '{"json_result":['+str(result)+']}'
-    return jsonify(result)
-
+    actions_import = __import__('actions')
+    func = getattr(actions_import, action)
+    result = func.getResult(input)
+    output = {}
+    output["json_result"] = result
+    return jsonify(output)
 
 
 
