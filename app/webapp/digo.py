@@ -102,9 +102,10 @@ def get_neo4jJson():
 
 @app.route('/add_node', methods=['POST'])
 def add_node():
-    time.sleep(2)
+    Wait = request.form["wait"]
     Type = request.form["type"]
     Value = request.form["value"]
+    time.sleep(int(Wait))
     new_ip = gdb.nodes.create(type=Value)
     new_ip.labels.add(Type)
     return "Node added"

@@ -68,9 +68,11 @@
 <script src="/static/linkurious/plugins/sigma.renderers.linkurious/canvas/sigma.canvas.edges.curvedArrow.js"></script>
 <script src="/static/linkurious/plugins/sigma.plugins.tooltips/sigma.plugins.tooltips.js"></script>
 <script src="/static/linkurious/plugins/sigma.plugins.locate/sigma.plugins.locate.js"></script>
+<script src="/static/assets/js/jquery-2.2.4.min.js"></script>
+
+<script src="/static/assets/js/bootstrap.min.js"></script>
 
 <link rel="stylesheet" type="text/css" href="/static/assets/css/graph.css" media="screen" />
-<script src="/static/assets/js/jquery-2.2.4.min.js"></script>
 <link href="/static/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
 <script src="/static/assets/js/bootstrap.min.js"></script>
 <link href="/static/assets/css/bootstrap-dialog.min.css" rel="stylesheet" type="text/css" />
@@ -340,28 +342,6 @@ sigma_json_parser()
 </script>
 
 
-
-
-
-<!-- #################################################################### -->
-<!--  Refresh function  -->
-<!-- #################################################################### -->
-<script>
-
-function refresh_graph(){
-  ajax_function("get_all_actions","GET", false, "").done(function(json) {
-   all_actions = json;
-  });
-  ajax_function("get_all_types","GET", false, "").done(function(data) {
-   all_types = data;
-  });
-  s.refresh()
-}
-
-</script>
-
-
-
 <!-- #################################################################### -->
 <!--  Used for showing the loading gif  -->
 <!-- #################################################################### -->
@@ -374,14 +354,18 @@ $(document).on({
     ajaxStop: function() { $body.removeClass("loading"); }
 });
 
-ajax_function = function(uri, method, data, async) {
+ajax_function = function(uri, method, data, async_value) {
+  if(async_value == undefined)
+  {
+    async_value = true;
+  }
   var request = {
       url: uri,
       type: method,
       //contentType: "application/json",
       //accepts: "application/json",
       cache: false,
-      async: true,
+      async: async_value,
       dataType: 'json',
       data: data,
   };
@@ -395,10 +379,30 @@ ajax_function = function(uri, method, data, async) {
 
 
 <!-- #################################################################### -->
+<!--  Refresh function  -->
+<!-- #################################################################### -->
+<script>
+
+function refresh_graph(){
+  ajax_function("get_all_actions","GET", false, true).done(function(json) {
+   all_actions = json;
+  });
+  ajax_function("get_all_types","GET", false, true).done(function(data) {
+   all_types = data;
+  });
+  s.refresh()
+}
+
+</script>
+
+
+
+
+<!-- #################################################################### -->
 <!--  Get the whole list of actions available  -->
 <!-- #################################################################### -->
 <script>
-ajax_function("get_all_actions","GET", false, "").done(function(json) {
+ajax_function("get_all_actions","GET", false, true).done(function(json) {
  all_actions = json;
 });
 </script>
@@ -408,7 +412,7 @@ ajax_function("get_all_actions","GET", false, "").done(function(json) {
 <!--  Get the whole list of types  -->
 <!-- #################################################################### -->
 <script>
-ajax_function("get_all_types","GET", false, "").done(function(data) {
+ajax_function("get_all_types","GET", false, false).done(function(data) {
  all_types = data
 });
 </script>
@@ -419,48 +423,84 @@ ajax_function("get_all_types","GET", false, "").done(function(data) {
 <!--  Modal when receiving result from an action -->
 <!-- #################################################################### -->
 <script>
+var count_result_action = 0;
 $(document).on('click', '#link-actions', function() {
-  ajax_function("action","GET", "action="+$("#link-actions").text()+"&input="+node_selected.label).done(function(data) {
+  ajax_function("action","GET", "action="+$("#link-actions").text()+"&input="+node_selected.label, true).done(function(data) {
     BootstrapDialog.show({
       size: BootstrapDialog.SIZE_WIDE,
       title: 'Results',
       draggable: true,
+      nl2br: false,
+      data: {
+                'count_result_action': count_result_action,
+            },
       message: function(dialog){
-        var $message = '<table class="modal-action-table"><tr><th class="modal-action-node">Node</th><th class="modal-action-prop">Property</th><th class="modal-action-type">Type</th><th class="modal-action-details">Details</th></tr>'
-        //json_result = JSON.parse(data).json_result['0']
-        json_result = data["json_result"]
+        var $message = `
+          <table class="modal-action-table">
+            <tr>
+              <th class="modal-action-node">
+                Node
+              </th>
+              <th class="modal-action-prop">
+                Property
+              </th>
+              <th class="modal-action-type">
+                Type
+              </th>
+              <th class="modal-action-details">
+                Details
+              </th>
+            </tr>`;
+        json_result = data["json_result"];
+        var count_result_action = dialog.getData('count_result_action');
         for (var key in json_result) {
-            $message += '<tr><td><input type="checkbox" name="node[]" value="'+key+';'+json_result[key]+'"></td><td><input type="checkbox" name="prop[]" value="'+key+';'+json_result[key]+'"></td><td><b>'+key+'</b></td><td>'+json_result[key]+'</td></tr>'
+            count_result_action += 1;
+            $message += `
+              <tr>
+                <td>
+                  <input type="checkbox" name="node_check_`+count_result_action+`" value="`+key+`;`+json_result[key]+`">
+                </td>
+                <td>
+                  <input type="checkbox" name="prop_check_`+count_result_action+`" value="`+key+`;`+json_result[key]+`">
+                </td>
+                <td>
+                  <b><input id="key-modal" name="node_key_`+count_result_action+`" value=`+key+`></input></b>
+                </td>
+                <td>
+                  <input id="value-modal" name="node_value_`+count_result_action+`" value=`+json_result[key]+`></input></b>
+                </td>
+              </tr>`
         }
-        $message += "</table>"
-        return $message
+        $message += "</table>";
+        dialog.setData('count_result_action',count_result_action);
+        return $message;
       },
       buttons: [{
         icon: 'glyphicon glyphicon-send',
         label: 'Ok',
         cssClass: 'btn-primary',
-        action: function(dialogRef){
-          $('input[name="node[]"]:checked').each(function() {
-            console.log("node "+$(this).val() );
-          });
-          $('input[name="prop[]"]:checked').each(function() {
-            console.log("prop "+$(this).val() );
-          });
+        action: function(dialog){
+          var count_result_action = dialog.getData('count_result_action');
+          for(i=0;i<count_result_action;i++){
+            $('input[name="node_check_'+i+'"]:checked').each(function() {
+                type = $('input[name="node_key_'+i+'"]').val();
+                value = $('input[name="node_value_'+i+'"]').val();
+                ajax_function("add_node","POST", 'wait=0&type='+type+'&value='+value, true).complete(function(json) {
+                });
+            });
+          }
+          refresh_graph();
+          sigma_json_parser();
         }
       }, {
         label: 'Close',
         action: function(dialogRef){
-        dialogRef.close();
+          dialogRef.close();
         }
       }]
     });
   });
 });
-
-
-
-
-
 
 </script>
 
@@ -485,7 +525,7 @@ $(document).on('click', '#delete_node', function() {
     btnOKClass: 'btn-warning',
     callback: function(result) {
         if(result) {
-          ajax_function("delete_node","POST", 'id='+$("#delete_node").val()).complete(function(json) {
+          ajax_function("delete_node","POST", 'id='+$("#delete_node").val(), true).complete(function(json) {
             refresh_graph();
             sigma_json_parser();
           });
@@ -532,7 +572,7 @@ $(document).on('click', '#add_node', function() {
       cssClass: 'btn-primary',
       action: function(dialogRef){
         dialogRef.close();
-        ajax_function("add_node","POST", 'type='+$('#types [value="' + $('#modal-add_node-content').val() + '"]').data('value')+'&value='+$('#message-text').val()).complete(function(json) {
+        ajax_function("add_node","POST", 'wait=2&type='+$("input#modal-add_node-content").val()+'&value='+$('#message-text').val(), true).complete(function(json) {
           refresh_graph();
           sigma_json_parser()
         });
@@ -540,11 +580,12 @@ $(document).on('click', '#add_node', function() {
     }, {
       label: 'Close',
       action: function(dialogRef){
-      dialogRef.close();
+        dialogRef.close();
       }
     }]
   });
 });
+
 
 $(document).on('click', '.dropdown-menu li a', function() {
   var selText = $(this).text();
@@ -553,15 +594,7 @@ $(document).on('click', '.dropdown-menu li a', function() {
 
 </script>
 
-<script type="text/javascript">
-$(function(){
-    $('#input').change(function(){
-        var abc = $("#types option[value='" + $('#input').val() + "']").attr('data-id');
-        alert(abc);
-    });
-});
 
-</script>
 
 
 <!-- #################################################################### -->
