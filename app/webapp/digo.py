@@ -89,11 +89,7 @@ def get_neo4jJson():
     '''
     Get Neo4j JSON
     '''
-    #query = 'MATCH p=shortestPath( (bacon:Person {name:"Kevin Bacon"})-[*]-(meg:Person {name:"Meg Ryan"}) ) RETURN p'
-    #query = 'MATCH (people:Person)-[relatedTo]-(:Movie {title: "Cloud Atlas"}) RETURN people.name, Type(relatedTo), relatedTo'
-    #query = 'MATCH (n) RETURN n'
     query = 'MATCH (n) OPTIONAL MATCH (n)-[r]-() return n,r'
-    #query = 'MATCH (n) RETURN n'
     results = gdb.query(query, data_contents=True)
     SigmaJSON = convertNeo4jJsonToSigma(results.graph)
     return SigmaJSON
@@ -112,15 +108,14 @@ def add_node():
 
 
 
-@app.route('/add_node_properties', methods=['POST'])
+@app.route('/add_property', methods=['POST'])
 def add_node_properties():
-    time.sleep(2)
-    Value = request.form['value']
+    Wait = request.form["wait"]
+    Id = request.form['id']
     Property_key = request.form['property_key']
     Property_value = request.form['property_value']
-    query = 'MATCH (n) WHERE n.type = "'+Value+'" RETURN Id(n)'
-    Id = gdb.query(query, data_contents=True)
-    n = gdb.nodes.get(Id.rows[0][0])
+    time.sleep(int(Wait))
+    n = gdb.nodes.get(Id)
     n.set(Property_key, Property_value)
     return "Property added to the node"
 
@@ -128,19 +123,21 @@ def add_node_properties():
 
 @app.route('/delete_node', methods=['POST'])
 def delete_node():
-    time.sleep(2)
+    Wait = request.form["wait"]
     Id = request.form["id"]
+    time.sleep(int(Wait))
     query = 'START n=node('+Id+') OPTIONAL MATCH (n)-[r]-() DELETE n,r'
     Id = gdb.query(query)
     return "Node delete"
 
 
 
-@app.route('/create_relationship', methods=['POST'])
+@app.route('/add_relationship', methods=['POST'])
 def create_relationship():
-    time.sleep(2)
+    Wait = request.form["wait"]
     id1 = request.form["id1"]
     id2 = request.form["id2"]
+    time.sleep(int(Wait))
     query = 'START a=node('+id1+'), b=node('+id2+') CREATE UNIQUE (a)-[r:relation]->(b)'
     Id = gdb.query(query)
     return "Relation created"

@@ -88,6 +88,7 @@
 <script>
 var all_types;
 var all_actions;
+var all_nodes;
 var node_selected = {};
 
 </script>
@@ -199,7 +200,7 @@ var i,
 
     var config = {
       node: [{
-        show: 'doubleClickNode',
+        show: 'rightClickNode',
         position: 'top',
         autoadjust: true,
         renderer: function(node) {
@@ -216,12 +217,14 @@ var i,
           '  <div class="sigma-tooltip-footer">Number of connections: '+node.degree+'</div>' +
           '  <div class="sigma-tooltip-footer">' +
           '   <button type="button" id="delete_node" value="'+node.id+'">Delete Node</button>' +
+          '   <button type="button" id="add_relationship" value="'+node.id+'">Add Relationship</button>' +
+          '   <button type="button" id="add_property" value="'+node.id+'">Add Property</button>' +
           '  </div>'
           return output
         }
 
       }, {
-          show: 'rightClickNode',
+          show: 'doubleClickNode',
           renderer: function(node) {
             node_selected = node
             actions = "";
@@ -287,6 +290,7 @@ function sigma_json_parser(){
        function() {
            var i,
            nodes = s.graph.nodes();
+           all_nodes = nodes
            edges = s.graph.edges();
            len_nodes = nodes.length;
            len_edges = edges.length;
@@ -340,6 +344,8 @@ function sigma_json_parser(){
 sigma_json_parser()
 
 </script>
+
+
 
 
 <!-- #################################################################### -->
@@ -415,6 +421,200 @@ ajax_function("get_all_actions","GET", false, true).done(function(json) {
 ajax_function("get_all_types","GET", false, false).done(function(data) {
  all_types = data
 });
+</script>
+
+
+<!-- #################################################################### -->
+<!--  Delete node -->
+<!-- #################################################################### -->
+<script>
+
+$(document).on('click', '#delete_node', function() {
+  BootstrapDialog.confirm({
+    title: 'WARNING',
+    message: 'Are you sure you want to delete the node ?',
+    type: BootstrapDialog.TYPE_DANGER,
+    closable: true,
+    draggable: true,
+    btnCancelLabel: 'Cancel!',
+    btnOKLabel: 'Delete!',
+    btnOKClass: 'btn-warning',
+    callback: function(result) {
+        if(result) {
+          ajax_function("delete_node","POST", 'id='+$("#delete_node").val(), true).complete(function(json) {
+            refresh_graph();
+            sigma_json_parser();
+          });
+        }
+    }
+  });
+});
+</script>
+
+
+<!-- #################################################################### -->
+<!--  Modal when adding a relationship -->
+<!-- #################################################################### -->
+<script>
+$(document).on('click', '#add_relationship', function() {
+  BootstrapDialog.show({
+    title: 'Add relationship',
+    draggable: true,
+    message: function(dialog){
+      var output = "";
+      for (var row in all_nodes) {
+          output += '<option value="'+all_nodes[row]['id']+' - '+all_nodes[row]['label']+'"  />';
+      }
+      var $message = $(`
+      <form>
+        <div class="form-group">
+          <label class="control-label">Type:</label>
+          <div class="btn-group dropdown">
+            <input list="types" type="search" placeholder="Pick a type ..." id="modal-add_relationship">
+            <datalist id="types">`+output+`</datalist>
+          </div>
+        </div>
+      </form>
+      `);
+      return $message;
+    },
+    buttons: [{
+      icon: 'glyphicon glyphicon-send',
+      label: 'Add new relationship',
+      cssClass: 'btn-primary',
+      action: function(dialogRef){
+        dialogRef.close();
+        ajax_function("add_relationship","POST", 'wait=2&id1='+$("input#modal-add_relationship").val().split(' - ',1)+'&id2='+$('#add_relationship').val(), true).complete(function(json) {
+          refresh_graph();
+          sigma_json_parser()
+        });
+      }
+    }, {
+      label: 'Close',
+      action: function(dialogRef){
+        dialogRef.close();
+      }
+    }]
+  });
+});
+
+
+$(document).on('click', '.dropdown-menu li a', function() {
+  var selText = $(this).text();
+  $(this).parents('.btn-group').find('.dropdown-toggle').html(selText+' <span class="caret"></span>');
+});
+
+</script>
+
+
+
+
+<!-- #################################################################### -->
+<!--  Modal when adding property -->
+<!-- #################################################################### -->
+<script>
+$(document).on('click', '#add_property', function() {
+  BootstrapDialog.show({
+    title: 'Add property',
+    draggable: true,
+    message: function(dialog){
+      var $message = $(`
+      <form>
+        <div class="form-group">
+          <div class="btn-group dropdown">
+            <input id="modal-add_property-key" placeholder="Pick a key ..."></input>
+            <input id="modal-add_property-value" placeholder="Pick a value ..."></input>
+          </div>
+        </div>
+      </form>
+      `);
+      return $message;
+    },
+    buttons: [{
+      icon: 'glyphicon glyphicon-send',
+      label: 'Add new property',
+      cssClass: 'btn-primary',
+      action: function(dialogRef){
+        dialogRef.close();
+        ajax_function("add_property","POST", 'wait=2&id='+$("#add_property").val()+'&property_key='+$("input#modal-add_property-key").val()+'&property_value='+$("input#modal-add_property-value").val(), true).complete(function(json) {
+          refresh_graph();
+          sigma_json_parser()
+        });
+      }
+    }, {
+      label: 'Close',
+      action: function(dialogRef){
+        dialogRef.close();
+      }
+    }]
+  });
+});
+
+
+$(document).on('click', '.dropdown-menu li a', function() {
+  var selText = $(this).text();
+  $(this).parents('.btn-group').find('.dropdown-toggle').html(selText+' <span class="caret"></span>');
+});
+
+</script>
+
+
+<!-- #################################################################### -->
+<!--  Modal when adding a node -->
+<!-- #################################################################### -->
+<script>
+$(document).on('click', '#add_node', function() {
+  BootstrapDialog.show({
+    title: 'New node',
+    draggable: true,
+    message: function(dialog){
+      var output = "";
+      for (var row in all_types) {
+          output += '<option data-value="'+row+'" value="'+row+'"  />';
+      }
+      var $message = $(`
+      <form>
+        <div class="form-group">
+          <label class="control-label">Type:</label>
+          <div class="btn-group dropdown">
+            <input list="types" type="search" placeholder="Pick a type ..." id="modal-add_node-content">
+            <datalist id="types">`+output+`</datalist>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="control-label">Value:</label>
+          <textarea class="form-control" id="message-text"></textarea>
+        </div>
+      </form>
+      `);
+      return $message;
+    },
+    buttons: [{
+      icon: 'glyphicon glyphicon-send',
+      label: 'Add new node',
+      cssClass: 'btn-primary',
+      action: function(dialogRef){
+        dialogRef.close();
+        ajax_function("add_node","POST", 'wait=2&type='+$("input#modal-add_node-content").val()+'&value='+$('#message-text').val(), true).complete(function(json) {
+          refresh_graph();
+          sigma_json_parser()
+        });
+      }
+    }, {
+      label: 'Close',
+      action: function(dialogRef){
+        dialogRef.close();
+      }
+    }]
+  });
+});
+
+
+$(document).on('click', '.dropdown-menu li a', function() {
+  var selText = $(this).text();
+  $(this).parents('.btn-group').find('.dropdown-toggle').html(selText+' <span class="caret"></span>');
+});
+
 </script>
 
 
@@ -508,91 +708,7 @@ $(document).on('click', '#link-actions', function() {
 
 
 
-<!-- #################################################################### -->
-<!--  Delete node -->
-<!-- #################################################################### -->
-<script>
 
-$(document).on('click', '#delete_node', function() {
-  BootstrapDialog.confirm({
-    title: 'WARNING',
-    message: 'Are you sure you want to delete the node ?',
-    type: BootstrapDialog.TYPE_DANGER,
-    closable: true,
-    draggable: true,
-    btnCancelLabel: 'Cancel!',
-    btnOKLabel: 'Delete!',
-    btnOKClass: 'btn-warning',
-    callback: function(result) {
-        if(result) {
-          ajax_function("delete_node","POST", 'id='+$("#delete_node").val(), true).complete(function(json) {
-            refresh_graph();
-            sigma_json_parser();
-          });
-        }
-    }
-  });
-});
-</script>
-
-
-<!-- #################################################################### -->
-<!--  Modal when adding a node -->
-<!-- #################################################################### -->
-<script>
-$(document).on('click', '#add_node', function() {
-  BootstrapDialog.show({
-    title: 'New node',
-    draggable: true,
-    message: function(dialog){
-      var output = "";
-      for (var row in all_types) {
-          output += '<option data-value="'+row+'" value="'+row+'"  />';
-      }
-      var $message = $(`
-      <form>
-        <div class="form-group">
-          <label class="control-label">Type:</label>
-          <div class="btn-group dropdown">
-            <input list="types" type="search" placeholder="Pick a type ..." id="modal-add_node-content">
-            <datalist id="types">`+output+`</datalist>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="control-label">Value:</label>
-          <textarea class="form-control" id="message-text"></textarea>
-        </div>
-      </form>
-      `);
-      return $message;
-    },
-    buttons: [{
-      icon: 'glyphicon glyphicon-send',
-      label: 'Add new node',
-      cssClass: 'btn-primary',
-      action: function(dialogRef){
-        dialogRef.close();
-        ajax_function("add_node","POST", 'wait=2&type='+$("input#modal-add_node-content").val()+'&value='+$('#message-text').val(), true).complete(function(json) {
-          refresh_graph();
-          sigma_json_parser()
-        });
-      }
-    }, {
-      label: 'Close',
-      action: function(dialogRef){
-        dialogRef.close();
-      }
-    }]
-  });
-});
-
-
-$(document).on('click', '.dropdown-menu li a', function() {
-  var selText = $(this).text();
-  $(this).parents('.btn-group').find('.dropdown-toggle').html(selText+' <span class="caret"></span>');
-});
-
-</script>
 
 
 
