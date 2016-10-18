@@ -102,9 +102,9 @@ def add_node():
     Type = request.form["type"]
     Value = request.form["value"]
     time.sleep(int(Wait))
-    new_ip = gdb.nodes.create(type=Value)
-    new_ip.labels.add(Type)
-    return "Node added"
+    new_node = gdb.nodes.create(type=Value)
+    new_node.labels.add(Type)
+    return str(new_node.id)
 
 
 
@@ -133,7 +133,7 @@ def delete_node():
 
 
 @app.route('/add_relationship', methods=['POST'])
-def create_relationship():
+def add_relationship():
     Wait = request.form["wait"]
     id1 = request.form["id1"]
     id2 = request.form["id2"]

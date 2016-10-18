@@ -89,6 +89,7 @@
 var all_types;
 var all_actions;
 var all_nodes;
+var ajax_return;
 var node_selected = {};
 
 </script>
@@ -372,8 +373,11 @@ ajax_function = function(uri, method, data, async_value) {
       //accepts: "application/json",
       cache: false,
       async: async_value,
-      dataType: 'json',
+      //dataType: 'json',
       data: data,
+      success: function(d){
+        ajax_return = d
+      }
   };
   return $.ajax(request);
 }
@@ -680,13 +684,23 @@ $(document).on('click', '#link-actions', function() {
         label: 'Ok',
         cssClass: 'btn-primary',
         action: function(dialog){
+          //dialog.close();
           var count_result_action = dialog.getData('count_result_action');
           for(i=0;i<count_result_action;i++){
             $('input[name="node_check_'+i+'"]:checked').each(function() {
                 type = $('input[name="node_key_'+i+'"]').val();
                 value = $('input[name="node_value_'+i+'"]').val();
-                ajax_function("add_node","POST", 'wait=0&type='+type+'&value='+value, true).complete(function(json) {
+                ajax_function("add_node","POST", 'wait=0&type='+type+'&value='+value, true).complete(function(data) {
+                  ajax_function("add_relationship","POST", 'wait=0&id1='+node_selected.id+'&id2='+ajax_return, true).complete(function(data) {
+                  });
                 });
+            });
+            $('input[name="prop_check_'+i+'"]:checked').each(function() {
+                type = $('input[name="node_key_'+i+'"]').val();
+                value = $('input[name="node_value_'+i+'"]').val();
+                console.log('wait=0&id='+node_selected.id+'&property_key='+type+'&property_value='+value)
+                //ajax_function("add_property","POST", 'wait=0&id='+node_selected.id+'&property_key='+type+'&property_value='+value, true).complete(function(data) {
+                //});
             });
           }
           refresh_graph();
@@ -694,8 +708,8 @@ $(document).on('click', '#link-actions', function() {
         }
       }, {
         label: 'Close',
-        action: function(dialogRef){
-          dialogRef.close();
+        action: function(dialog){
+          dialog.close();
         }
       }]
     });
