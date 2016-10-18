@@ -265,7 +265,7 @@ var i,
 
 <script>
 
-function sigma_json_parser(){
+function sigma_json_parser(refresh){
 
     var color = {
               "edges":"#A5ABB6",
@@ -320,8 +320,10 @@ function sigma_json_parser(){
            s.refresh();
 
            // ForceAtlas Layout
-           s.startForceAtlas2({gravity:150,scalingRatio:70,slowDown:1000000});
-           setTimeout(function(){s.stopForceAtlas2();},1000);
+           if(refresh == false){
+             s.startForceAtlas2({gravity:150,scalingRatio:70,slowDown:1000000});
+             setTimeout(function(){s.stopForceAtlas2();},1000);
+           }
 
            cornerSidebarRelations = 'Relation('+count["relation"]+')&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
 
@@ -342,10 +344,9 @@ function sigma_json_parser(){
 
 }
 
-sigma_json_parser()
+
 
 </script>
-
 
 
 
@@ -360,6 +361,15 @@ $(document).on({
     ajaxStart: function() { $body.addClass("loading");    },
     ajaxStop: function() { $body.removeClass("loading"); }
 });
+
+
+function loading_gif(time){
+  $body.addClass("loading");
+  setTimeout(function(){
+      $body.removeClass("loading");
+  }, time);
+}
+
 
 ajax_function = function(uri, method, data, async_value) {
   if(async_value == undefined)
@@ -387,34 +397,15 @@ ajax_function = function(uri, method, data, async_value) {
 
 
 
-
-<!-- #################################################################### -->
-<!--  Refresh function  -->
-<!-- #################################################################### -->
-<script>
-
-function refresh_graph(){
-  ajax_function("get_all_actions","GET", false, true).done(function(json) {
-   all_actions = json;
-  });
-  ajax_function("get_all_types","GET", false, true).done(function(data) {
-   all_types = data;
-  });
-  s.refresh()
-}
-
-</script>
-
-
-
-
 <!-- #################################################################### -->
 <!--  Get the whole list of actions available  -->
 <!-- #################################################################### -->
 <script>
-ajax_function("get_all_actions","GET", false, true).done(function(json) {
- all_actions = json;
-});
+function get_all_actions(async){
+  ajax_function("get_all_actions","GET", false, async).done(function(json) {
+   all_actions = json;
+  });
+}
 </script>
 
 
@@ -422,10 +413,41 @@ ajax_function("get_all_actions","GET", false, true).done(function(json) {
 <!--  Get the whole list of types  -->
 <!-- #################################################################### -->
 <script>
-ajax_function("get_all_types","GET", false, false).done(function(data) {
- all_types = data
-});
+function get_all_types(async){
+  ajax_function("get_all_types","GET", false, async).done(function(data) {
+   all_types = data
+  });
+}
 </script>
+
+
+<!-- #################################################################### -->
+<!--  Beginning of the graph page  -->
+<!-- #################################################################### -->
+<script>
+function beginning_graph_page(){
+  sigma_json_parser(false)
+  get_all_actions(true);
+  get_all_types(true);
+}
+
+beginning_graph_page()
+</script>
+
+
+
+<!-- #################################################################### -->
+<!--  Refresh function  -->
+<!-- #################################################################### -->
+<script>
+function refresh_graph(time){
+  get_all_actions(false);
+  get_all_types(false);
+  loading_gif(time);
+  sigma_json_parser(true);
+}
+</script>
+
 
 
 <!-- #################################################################### -->
@@ -445,15 +467,74 @@ $(document).on('click', '#delete_node', function() {
     btnOKClass: 'btn-warning',
     callback: function(result) {
         if(result) {
-          ajax_function("delete_node","POST", 'id='+$("#delete_node").val(), true).complete(function(json) {
-            refresh_graph();
-            sigma_json_parser();
+          ajax_function("delete_node","POST", 'id='+$("#delete_node").val(), false).complete(function(json) {
+            refresh_graph(1000);
           });
         }
     }
   });
 });
 </script>
+
+
+<!-- #################################################################### -->
+<!--  Modal when adding a node -->
+<!-- #################################################################### -->
+<script>
+$(document).on('click', '#add_node', function() {
+  BootstrapDialog.show({
+    title: 'New node',
+    draggable: true,
+    message: function(dialog){
+      var output = "";
+      for (var row in all_types) {
+          output += '<option data-value="'+row+'" value="'+row+'"  />';
+      }
+      var $message = $(`
+      <form>
+        <div class="form-group">
+          <label class="control-label">Type:</label>
+          <div class="btn-group dropdown">
+            <input list="types" type="search" placeholder="Pick a type ..." id="modal-add_node-content">
+            <datalist id="types">`+output+`</datalist>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="control-label">Value:</label>
+          <textarea class="form-control" id="message-text"></textarea>
+        </div>
+      </form>
+      `);
+      return $message;
+    },
+    buttons: [{
+      icon: 'glyphicon glyphicon-send',
+      label: 'Add new node',
+      cssClass: 'btn-primary',
+      action: function(dialogRef){
+        dialogRef.close();
+        ajax_function("add_node","POST", 'type='+$("input#modal-add_node-content").val()+'&value='+$('#message-text').val(), false).complete(function(json) {
+          refresh_graph(1000);
+        });
+      }
+    }, {
+      label: 'Close',
+      action: function(dialogRef){
+        dialogRef.close();
+      }
+    }]
+  });
+});
+
+
+$(document).on('click', '.dropdown-menu li a', function() {
+  var selText = $(this).text();
+  $(this).parents('.btn-group').find('.dropdown-toggle').html(selText+' <span class="caret"></span>');
+});
+
+</script>
+
+
 
 
 <!-- #################################################################### -->
@@ -488,9 +569,8 @@ $(document).on('click', '#add_relationship', function() {
       cssClass: 'btn-primary',
       action: function(dialogRef){
         dialogRef.close();
-        ajax_function("add_relationship","POST", 'wait=2&id1='+$("input#modal-add_relationship").val().split(' - ',1)+'&id2='+$('#add_relationship').val(), true).complete(function(json) {
-          refresh_graph();
-          sigma_json_parser()
+        ajax_function("add_relationship","POST", 'id1='+$("input#modal-add_relationship").val().split(' - ',1)+'&id2='+$('#add_relationship').val(), false).complete(function(json) {
+          refresh_graph(1000);
         });
       }
     }, {
@@ -540,9 +620,8 @@ $(document).on('click', '#add_property', function() {
       cssClass: 'btn-primary',
       action: function(dialogRef){
         dialogRef.close();
-        ajax_function("add_property","POST", 'wait=2&id='+$("#add_property").val()+'&property_key='+$("input#modal-add_property-key").val()+'&property_value='+$("input#modal-add_property-value").val(), true).complete(function(json) {
-          refresh_graph();
-          sigma_json_parser()
+        ajax_function("add_property","POST", 'id='+$("#add_property").val()+'&property_key='+$("input#modal-add_property-key").val()+'&property_value='+$("input#modal-add_property-value").val(), false).complete(function(json) {
+          refresh_graph(1000);
         });
       }
     }, {
@@ -563,63 +642,6 @@ $(document).on('click', '.dropdown-menu li a', function() {
 </script>
 
 
-<!-- #################################################################### -->
-<!--  Modal when adding a node -->
-<!-- #################################################################### -->
-<script>
-$(document).on('click', '#add_node', function() {
-  BootstrapDialog.show({
-    title: 'New node',
-    draggable: true,
-    message: function(dialog){
-      var output = "";
-      for (var row in all_types) {
-          output += '<option data-value="'+row+'" value="'+row+'"  />';
-      }
-      var $message = $(`
-      <form>
-        <div class="form-group">
-          <label class="control-label">Type:</label>
-          <div class="btn-group dropdown">
-            <input list="types" type="search" placeholder="Pick a type ..." id="modal-add_node-content">
-            <datalist id="types">`+output+`</datalist>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="control-label">Value:</label>
-          <textarea class="form-control" id="message-text"></textarea>
-        </div>
-      </form>
-      `);
-      return $message;
-    },
-    buttons: [{
-      icon: 'glyphicon glyphicon-send',
-      label: 'Add new node',
-      cssClass: 'btn-primary',
-      action: function(dialogRef){
-        dialogRef.close();
-        ajax_function("add_node","POST", 'wait=2&type='+$("input#modal-add_node-content").val()+'&value='+$('#message-text').val(), true).complete(function(json) {
-          refresh_graph();
-          sigma_json_parser()
-        });
-      }
-    }, {
-      label: 'Close',
-      action: function(dialogRef){
-        dialogRef.close();
-      }
-    }]
-  });
-});
-
-
-$(document).on('click', '.dropdown-menu li a', function() {
-  var selText = $(this).text();
-  $(this).parents('.btn-group').find('.dropdown-toggle').html(selText+' <span class="caret"></span>');
-});
-
-</script>
 
 
 
@@ -686,25 +708,29 @@ $(document).on('click', '#link-actions', function() {
         action: function(dialog){
           //dialog.close();
           var count_result_action = dialog.getData('count_result_action');
+          var count = 0;
           for(i=0;i<count_result_action;i++){
+            count += 1;
             $('input[name="node_check_'+i+'"]:checked').each(function() {
                 type = $('input[name="node_key_'+i+'"]').val();
                 value = $('input[name="node_value_'+i+'"]').val();
-                ajax_function("add_node","POST", 'wait=0&type='+type+'&value='+value, true).complete(function(data) {
-                  ajax_function("add_relationship","POST", 'wait=0&id1='+node_selected.id+'&id2='+ajax_return, true).complete(function(data) {
+                ajax_function("add_node","POST", 'type='+type+'&value='+value, true).complete(function(data) {
+                  ajax_function("add_relationship","POST", 'id1='+node_selected.id+'&id2='+ajax_return, true).complete(function(data) {
                   });
                 });
             });
             $('input[name="prop_check_'+i+'"]:checked').each(function() {
                 type = $('input[name="node_key_'+i+'"]').val();
                 value = $('input[name="node_value_'+i+'"]').val();
-                console.log('wait=0&id='+node_selected.id+'&property_key='+type+'&property_value='+value)
-                //ajax_function("add_property","POST", 'wait=0&id='+node_selected.id+'&property_key='+type+'&property_value='+value, true).complete(function(data) {
-                //});
+                ajax_function("add_property","POST", 'id='+node_selected.id+'&property_key='+type+'&property_value='+value, true).complete(function(data) {
+                });
             });
           }
-          refresh_graph();
-          sigma_json_parser();
+          setTimeout( function timer(){
+            dialog.close();
+            refresh_graph(1500);
+          }, 500);
+
         }
       }, {
         label: 'Close',

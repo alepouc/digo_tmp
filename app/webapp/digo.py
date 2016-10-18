@@ -98,10 +98,8 @@ def get_neo4jJson():
 
 @app.route('/add_node', methods=['POST'])
 def add_node():
-    Wait = request.form["wait"]
     Type = request.form["type"]
     Value = request.form["value"]
-    time.sleep(int(Wait))
     new_node = gdb.nodes.create(type=Value)
     new_node.labels.add(Type)
     return str(new_node.id)
@@ -110,11 +108,9 @@ def add_node():
 
 @app.route('/add_property', methods=['POST'])
 def add_node_properties():
-    Wait = request.form["wait"]
     Id = request.form['id']
     Property_key = request.form['property_key']
     Property_value = request.form['property_value']
-    time.sleep(int(Wait))
     n = gdb.nodes.get(Id)
     n.set(Property_key, Property_value)
     return "Property added to the node"
@@ -123,21 +119,17 @@ def add_node_properties():
 
 @app.route('/delete_node', methods=['POST'])
 def delete_node():
-    Wait = request.form["wait"]
     Id = request.form["id"]
-    time.sleep(int(Wait))
     query = 'START n=node('+Id+') OPTIONAL MATCH (n)-[r]-() DELETE n,r'
-    Id = gdb.query(query)
+    n = gdb.query(query)
     return "Node delete"
 
 
 
 @app.route('/add_relationship', methods=['POST'])
 def add_relationship():
-    Wait = request.form["wait"]
     id1 = request.form["id1"]
     id2 = request.form["id2"]
-    time.sleep(int(Wait))
     query = 'START a=node('+id1+'), b=node('+id2+') CREATE UNIQUE (a)-[r:relation]->(b)'
     Id = gdb.query(query)
     return "Relation created"
