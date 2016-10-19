@@ -13,6 +13,7 @@ from collections import defaultdict
 from actions import *
 
 
+
 app = Flask(__name__)
 gdb = GraphDatabase("http://digo-db:7474/db/data", username="neo4j", password="debug")
 
@@ -114,6 +115,55 @@ def add_node_properties():
     n = gdb.nodes.get(Id)
     n.set(Property_key, Property_value)
     return "Property added to the node"
+
+
+@app.route('/edit_node', methods=['POST'])
+def edit_node():
+    data = request.form
+    Id = data['id']
+    Type = data['value']
+    Label = data['type']
+
+    n = gdb.nodes.get(Id)
+
+    # Remove current propertiies
+    for row in n.properties:
+        query = 'START n=node('+Id+') REMOVE n.'+row
+        n = gdb.query(query)
+
+    # Insert new properties
+    for key, value in data.items():
+        if key == 'id':
+            pass
+        elif key == 'value':
+            query = 'START n=node('+Id+') SET n.type = "'+Type+'"'
+            n = gdb.query(query)
+        else:
+            query = 'START n=node('+Id+') SET n.'+key+' = "'+value+'"'
+            n = gdb.query(query)
+
+        #query = 'START n=node('+Id+') REMOVE n.'+row
+        # = gdb.query(query)
+
+    # Get current labels name
+    query = 'START n=node('+Id+') return labels(n)'
+    labels = gdb.query(query)
+    for row in labels:
+        label = row[0][0]
+
+    # Remove current label
+    query = 'START n=node('+Id+') REMOVE n:'+label
+    n = gdb.query(query)
+
+    # Add new label
+    query = 'START n=node('+Id+') set n:'+Label
+    n = gdb.query(query)
+
+    return "Node updated"
+
+
+
+
 
 
 

@@ -220,6 +220,7 @@ var i,
           '   <button type="button" id="delete_node" value="'+node.id+'">Delete Node</button>' +
           '   <button type="button" id="add_relationship" value="'+node.id+'">Add Relationship</button>' +
           '   <button type="button" id="add_property" value="'+node.id+'">Add Property</button>' +
+          '   <button type="button" id="edit_node" value="'+node.id+'">Edit Node</button>' +
           '  </div>'
           return output
         }
@@ -269,18 +270,17 @@ function sigma_json_parser(refresh){
 
     var color = {
               "edges":"#A5ABB6",
-              "ip":"#FF756E",
-              "domain":"#DE9BF9",
-              "email": "#68BDF6",
-              "hash": "#6DCE9E"
+              "ipv4":"#FF756E",
+              "ipv6":"#DE9BF9",
+              "domain": "#68BDF6",
+              "email": "#6DCE9E",
+              "hash": "#FFD86E",
+              "country": "#FF756E",
+              "entity": "#FB95AF",
+              "threat_actor": "#A5ABB6"
             }
 
-    var count = {
-              "count":0,
-              "relation":0,
-              "ip":0,
-              "domain":0
-            }
+    var count = {}
 
     //
     // Get Neo4j JSON and parse it
@@ -296,17 +296,23 @@ function sigma_json_parser(refresh){
            len_nodes = nodes.length;
            len_edges = edges.length;
 
+           count['nodes'] = 0;
+           count['relation'] = 0;
            for (i = 0; i < len_nodes; i++) {
-              count["count"] += 1;
-               if(nodes[i].properties['type'] == "ip"){
-                 nodes[i].color = color.ip
-                 count["ip"] += 1;
+             if(count[nodes[i].properties['type']]){
+               count[nodes[i].properties['type']] += 1;
+             }
+             else {
+                count[nodes[i].properties['type']] = 1;
+             }
+             count['nodes'] += 1;
+
+             for (var key in color){
+               if(nodes[i].properties['type'] == key){
+                  nodes[i].color = color[key]
                }
-               else if (nodes[i].properties['type']== "domain") {
-                 nodes[i].color = color.domain
-                 count["domain"] += 1;
-               }
-               nodes[i].size = s.graph.degree(nodes[i].id);
+             }
+             nodes[i].size = s.graph.degree(nodes[i].id);
            }
 
            for (i = 0; i < len_edges; i++) {
@@ -325,12 +331,11 @@ function sigma_json_parser(refresh){
              setTimeout(function(){s.stopForceAtlas2();},1000);
            }
 
-           cornerSidebarRelations = 'Relation('+count["relation"]+')&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
-
-           cornerSidebarNodes = 'Nodes('+count["count"]+')&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
-           cornerSidebarNodes += 'Ip('+count["ip"]+')&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
-           cornerSidebarNodes += 'Domain('+count["domain"]+')'
-           $("#cornerbottomright").html(cornerSidebarRelations+cornerSidebarNodes);
+           cornerbottomright = ""
+           for (var key in count){
+             cornerbottomright += key+'('+count[key]+')&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+           }
+           $("#cornerbottomright").html(cornerbottomright);
          }
     );
 
@@ -379,11 +384,8 @@ ajax_function = function(uri, method, data, async_value) {
   var request = {
       url: uri,
       type: method,
-      //contentType: "application/json",
-      //accepts: "application/json",
       cache: false,
       async: async_value,
-      //dataType: 'json',
       data: data,
       success: function(d){
         ajax_return = d
@@ -642,6 +644,109 @@ $(document).on('click', '.dropdown-menu li a', function() {
 </script>
 
 
+
+<!-- #################################################################### -->
+<!--  Modal when editting a node -->
+<!-- #################################################################### -->
+<script>
+var count_result_edit = 0;
+$(document).on('click', '#edit_node', function() {
+  BootstrapDialog.show({
+    title: 'Edit Node',
+    draggable: true,
+    nl2br: false,
+    data: {
+              'count_result_edit': count_result_edit,
+          },
+    message: function(dialog){
+      var count_result_edit = dialog.getData('count_result_edit');
+      var $message = `
+        <table class="modal-action-table">
+          <tr>
+            <th class="modal-action-type">
+              Type
+            </th>
+            <th class="modal-action-details">
+              Value
+            </th>
+          </tr>`;
+
+      $message += `
+        <tr>
+          <td>
+            <b><input type="text" name="key_`+count_result_edit+`" value="id" readonly="readonly" /></b>
+          </td>
+          <td>
+            <input type="text" name="value_`+count_result_edit+`" value=`+node_selected.id+` readonly="readonly" />
+          </td>
+        </tr>`
+        count_result_edit += 1;
+        $message += `
+        <tr>
+          <td>
+            <b><input type="text" name="key_`+count_result_edit+`" value="value" readonly="readonly" /></b>
+          </td>
+          <td>
+            <input type="text" name="value_`+count_result_edit+`" value=`+node_selected.label+` />
+          </td>
+        </tr>`;
+        count_result_edit += 1;
+        for (var row in node_selected.properties){
+          if(row == 'type'){
+            $message += `
+              <tr>
+                <td>
+                  <b><input type="text" name="key_`+count_result_edit+`" value=`+row+` readonly="readonly" /></b>
+                </td>
+                <td>
+                  <input type="text" name="value_`+count_result_edit+`" value=`+node_selected.properties[row]+`></input></b>
+                </td>
+              </tr>`;
+          } else {
+            $message += `
+              <tr>
+                <td>
+                  <b><input type="text" name="key_`+count_result_edit+`" value=`+row+`></input></b>
+                </td>
+                <td>
+                  <input type="text" name="value_`+count_result_edit+`" value=`+node_selected.properties[row]+`></input></b>
+                </td>
+              </tr>`;
+          }
+          count_result_edit += 1;
+
+        }
+      $message += "</table>";
+      dialog.setData('count_result_edit',count_result_edit);
+    return $message;
+    },
+    buttons: [{
+      icon: 'glyphicon glyphicon-send',
+      label: 'Edit Node',
+      cssClass: 'btn-primary',
+      action: function(dialog){
+        var count_result_edit = dialog.getData('count_result_edit');
+        var array = {}
+        for(i=0;i<count_result_edit;i++){
+          key = $('input[name="key_'+i+'"]').val();
+          value = $('input[name="value_'+i+'"]').val();
+          array[key] = value
+        }
+        ajax_function("edit_node","POST", array, false).complete(function(json) {
+          //refresh_graph(1000);
+        });
+      }
+    }, {
+      label: 'Close',
+      action: function(dialogRef){
+        dialogRef.close();
+      }
+    }]
+  });
+});
+
+
+</script>
 
 
 
