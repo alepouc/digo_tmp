@@ -11,15 +11,32 @@ import os
 import random
 from collections import defaultdict
 from actions import *
+from collections import Counter
 
 
 
 app = Flask(__name__)
 gdb = GraphDatabase("http://digo-db:7474/db/data", username="neo4j", password="debug")
-
+app.jinja_env.autoescape = False
 
 
 def convertNeo4jJsonToSigma(neo4jJson):
+
+    '''
+    test = [{
+            "id": "test",
+            "label": "label",
+            "type": "type",
+            "confidence": "confidence",
+            "diamond_model": "diamond_model",
+            "campaign": "campaign",
+            "relations": "relations",
+            "first_seen": "first_seen",
+            "last_seen":  "last_seen"
+            }]
+    '''
+
+
     '''
     Convert Neo4j JSON to Sigma JSON
     '''
@@ -69,19 +86,45 @@ def convertNeo4jJsonToSigma(neo4jJson):
 
 
 
+def convertNeo4jJsonToTable(neo4jJson):
+
+    data = []
+
+    for row in neo4jJson:
+        for d in row['nodes']:
+            tmp = {}
+            for k in d:
+                if k == 'id':
+                     tmp['id'] = d[k]
+                if k == 'labels':
+                    tmp['type'] = d[k][0]
+                if k == 'properties':
+                    for key in d[k]:
+                        if key == 'type':
+                            tmp['value'] = d[k][key]
+                        else:
+                            tmp[key] = d[k][key]
+            data.append(tmp)
+
+    return jsonify(data)
+
+
 
 @app.route('/')
 def get_homepage():
     '''
     Default template
     '''
-    return render_template("index.html")
+    number_of_indicator_by_type = get_number_of_indicator_by_type()
+    return render_template("dashboard.html", number_of_indicator_by_type=number_of_indicator_by_type)
+
 
 
 
 @app.route('/graph.html')
 def get_graphpage():
     return render_template("graph.html")
+
 
 
 
@@ -97,6 +140,15 @@ def get_neo4jJson():
 
 
 
+@app.route("/table_nodes")
+def get_table_nodes():
+    query = 'MATCH (n) RETURN n'
+    results = gdb.query(query, data_contents=True)
+    tableJSON = convertNeo4jJsonToTable(results.graph)
+    return tableJSON
+
+
+
 @app.route('/add_node', methods=['POST'])
 def add_node():
     Type = request.form["type"]
@@ -104,6 +156,7 @@ def add_node():
     new_node = gdb.nodes.create(type=Value)
     new_node.labels.add(Type)
     return str(new_node.id)
+
 
 
 
@@ -115,6 +168,8 @@ def add_node_properties():
     n = gdb.nodes.get(Id)
     n.set(Property_key, Property_value)
     return "Property added to the node"
+
+
 
 
 @app.route('/edit_node', methods=['POST'])
@@ -165,14 +220,13 @@ def edit_node():
 
 
 
-
-
 @app.route('/delete_node', methods=['POST'])
 def delete_node():
     Id = request.form["id"]
     query = 'START n=node('+Id+') OPTIONAL MATCH (n)-[r]-() DELETE n,r'
     n = gdb.query(query)
     return "Node delete"
+
 
 
 
@@ -200,6 +254,7 @@ def get_all_actions():
 
 
 
+
 @app.route("/get_all_types")
 def get_all_types():
     '''
@@ -211,6 +266,21 @@ def get_all_types():
     for row in results.rows:
         output[row[0][0]]=row[0][0].lower()
     return jsonify(output)
+
+
+
+@app.route("/get_number_of_indicator_by_type")
+def get_number_of_indicator_by_type():
+    '''
+    Get available type
+    '''
+    output = []
+    query = 'START n=node(*) RETURN labels(n)'
+    results = gdb.query(query, data_contents=True)
+    for row in results.rows:
+        output.append(row[0][0])
+    c = Counter(output)
+    return dict(c)
 
 
 

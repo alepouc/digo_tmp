@@ -211,9 +211,14 @@ var i,
           ' <div class="sigma-tooltip-header">Type: '+node.properties['type']+'</div>' +
           '  <div class="sigma-tooltip-body">' +
           '    <table>' +
-          '      <tr><th>Id:</th><td>'+node.id+'</td></tr>' +
-          '      <tr><th>Value: </th> <td>'+node.label+'</td></tr>' +
-          '    </table>' +
+          '      <tr><th>id:</th><td>'+node.id+'</td></tr>' +
+          '      <tr><th>value: </th> <td>'+node.label+'</td></tr>'
+          for (var row in node.properties){
+            if (row != 'type'){
+              output += '<tr><th>'+row+': </th> <td>'+node.properties[row]+'</td></tr>'
+            }
+          }
+          output += '</table>' +
           '  </div>' +
           '  <div class="sigma-tooltip-footer">Number of connections: '+node.degree+'</div>' +
           '  <div class="sigma-tooltip-footer">' +
@@ -232,10 +237,16 @@ var i,
             actions = "";
             type = node['properties']['type'].toLowerCase();
             var actions = "";
+            var count = 0;
             for (var row in all_actions[type]) {
-              actions += '&nbsp;&nbsp;<button class="btn btn-default btn-xs btn-hover-info" id="link-actions">'+all_actions[type][row]+'</button></br></br>'
+              count += 1;
             }
-            $("#aside-content").html(actions);
+            actions += '<p class="pad-hor mar-top text-semibold text-main"><span class="pull-right badge badge-warning">'+count+'</span> Available Actions</p>'
+            for (var row in all_actions[type]) {
+              actions += '<div id="aside-content_tab1" class="list-group bg-trans"><a href="#" id="link-actions" class="list-group-item"><span class="badge badge-info badge-icon badge-fw pull-left"></span>'+all_actions[type][row]+'</a>'
+            }
+            actions += '</div>'
+            $("#aside-content_tab1").html(actions);
             $.niftyAside('toggleHideShow');
             return ""
           }
@@ -406,9 +417,22 @@ ajax_function = function(uri, method, data, async_value) {
 function get_all_actions(async){
   ajax_function("get_all_actions","GET", false, async).done(function(json) {
    all_actions = json;
+   var actions = "";
+   var count = 0;
+   for (var row in all_actions) {
+     count += 1;
+   }
+   actions += '<p class="pad-hor mar-top text-semibold text-main"><span class="pull-right badge badge-warning">'+count+'</span> List of Actions</p>';
+   for (var row in all_actions) {
+     actions += '<div id="aside-content_tab2" class="list-group bg-trans"><a href="#" class="list-group-item"><span class="badge badge-info badge-icon badge-fw pull-left"></span>'+all_actions[row]+'</a>';
+   }
+   actions += '</div>'
+   $("#aside-content_tab2").html(actions);
   });
 }
+
 </script>
+
 
 
 <!-- #################################################################### -->
@@ -428,9 +452,13 @@ function get_all_types(async){
 <!-- #################################################################### -->
 <script>
 function beginning_graph_page(){
-  sigma_json_parser(false)
-  get_all_actions(true);
-  get_all_types(true);
+  sigma_json_parser(false);
+  get_all_types(false);
+  setTimeout( function timer(){
+    get_all_actions(false);
+  }, 500);
+
+
 }
 
 beginning_graph_page()
@@ -513,16 +541,16 @@ $(document).on('click', '#add_node', function() {
       icon: 'glyphicon glyphicon-send',
       label: 'Add new node',
       cssClass: 'btn-primary',
-      action: function(dialogRef){
-        dialogRef.close();
+      action: function(dialog){
+        dialog.close();
         ajax_function("add_node","POST", 'type='+$("input#modal-add_node-content").val()+'&value='+$('#message-text').val(), false).complete(function(json) {
           refresh_graph(1000);
         });
       }
     }, {
       label: 'Close',
-      action: function(dialogRef){
-        dialogRef.close();
+      action: function(dialog){
+        dialog.close();
       }
     }]
   });
@@ -569,16 +597,16 @@ $(document).on('click', '#add_relationship', function() {
       icon: 'glyphicon glyphicon-send',
       label: 'Add new relationship',
       cssClass: 'btn-primary',
-      action: function(dialogRef){
-        dialogRef.close();
+      action: function(dialog){
+        dialog.close();
         ajax_function("add_relationship","POST", 'id1='+$("input#modal-add_relationship").val().split(' - ',1)+'&id2='+$('#add_relationship').val(), false).complete(function(json) {
           refresh_graph(1000);
         });
       }
     }, {
       label: 'Close',
-      action: function(dialogRef){
-        dialogRef.close();
+      action: function(dialog){
+        dialog.close();
       }
     }]
   });
@@ -620,16 +648,16 @@ $(document).on('click', '#add_property', function() {
       icon: 'glyphicon glyphicon-send',
       label: 'Add new property',
       cssClass: 'btn-primary',
-      action: function(dialogRef){
-        dialogRef.close();
+      action: function(dialog){
+        dialog.close();
         ajax_function("add_property","POST", 'id='+$("#add_property").val()+'&property_key='+$("input#modal-add_property-key").val()+'&property_value='+$("input#modal-add_property-value").val(), false).complete(function(json) {
           refresh_graph(1000);
         });
       }
     }, {
       label: 'Close',
-      action: function(dialogRef){
-        dialogRef.close();
+      action: function(dialog){
+        dialog.close();
       }
     }]
   });
@@ -733,13 +761,14 @@ $(document).on('click', '#edit_node', function() {
           array[key] = value
         }
         ajax_function("edit_node","POST", array, false).complete(function(json) {
-          //refresh_graph(1000);
+          dialog.close();
+          refresh_graph(1000);
         });
       }
     }, {
       label: 'Close',
-      action: function(dialogRef){
-        dialogRef.close();
+      action: function(dialog){
+        dialog.close();
       }
     }]
   });
