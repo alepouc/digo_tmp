@@ -23,64 +23,51 @@ app.jinja_env.autoescape = False
 def convertNeo4jJsonToSigma(neo4jJson):
 
     '''
-    test = [{
-            "id": "test",
-            "label": "label",
-            "type": "type",
-            "confidence": "confidence",
-            "diamond_model": "diamond_model",
-            "campaign": "campaign",
-            "relations": "relations",
-            "first_seen": "first_seen",
-            "last_seen":  "last_seen"
-            }]
-    '''
-
-
-    '''
     Convert Neo4j JSON to Sigma JSON
     '''
     nodes_j = []
     edges_j = []
+    if neo4jJson:
+        for row in neo4jJson:
+            if str(row['relationships']) != "[]":
+                edges_j.extend(row['relationships'])
+            nodes_j.extend(row['nodes'])
 
-    for row in neo4jJson:
-        if str(row['relationships']) != "[]":
-            edges_j.extend(row['relationships'])
-        nodes_j.extend(row['nodes'])
+        nodes_j = {"nodes": nodes_j}
+        edges_j = {"edges": edges_j}
 
-    nodes_j = {"nodes": nodes_j}
-    edges_j = {"edges": edges_j}
-
-    nodes = []
-    for item in nodes_j['nodes']:
-        if item not in nodes:
-            nodes.append(item)
-
-
-    edges = []
-    for item in edges_j['edges']:
-        if item not in edges:
-            edges.append(item)
-
-    SigmaJSON = {
-                "nodes": nodes,
-                "edges" : edges }
+        nodes = []
+        for item in nodes_j['nodes']:
+            if item not in nodes:
+                nodes.append(item)
 
 
-    for item in SigmaJSON["nodes"]:
-        item['x'] = random.random()
-        item['y'] = random.random()
-        item['label'] = item.pop("labels")
-        Properties = item['properties']
-        Label = item['label']
-        item['label'] = Properties['type']
-        item['properties']['type'] = Label[0]
+        edges = []
+        for item in edges_j['edges']:
+            if item not in edges:
+                edges.append(item)
+
+        SigmaJSON = {
+                    "nodes": nodes,
+                    "edges" : edges }
 
 
-    for item in SigmaJSON["edges"]:
-        item['source'] = item.pop("startNode")
-        item['target'] = item.pop("endNode")
+        for item in SigmaJSON["nodes"]:
+            item['x'] = random.random()
+            item['y'] = random.random()
+            item['label'] = item.pop("labels")
+            Properties = item['properties']
+            Label = item['label']
+            item['label'] = Properties['type']
+            item['properties']['type'] = Label[0]
 
+
+        for item in SigmaJSON["edges"]:
+            item['source'] = item.pop("startNode")
+            item['target'] = item.pop("endNode")
+
+    else:
+        SigmaJSON = {"nodes": [], "edges": []}
     return jsonify(SigmaJSON)
 
 
@@ -90,21 +77,22 @@ def convertNeo4jJsonToTable(neo4jJson):
 
     data = []
 
-    for row in neo4jJson:
-        for d in row['nodes']:
-            tmp = {}
-            for k in d:
-                if k == 'id':
-                     tmp['id'] = d[k]
-                if k == 'labels':
-                    tmp['type'] = d[k][0]
-                if k == 'properties':
-                    for key in d[k]:
-                        if key == 'type':
-                            tmp['value'] = d[k][key]
-                        else:
-                            tmp[key] = d[k][key]
-            data.append(tmp)
+    if neo4jJson:
+        for row in neo4jJson:
+            for d in row['nodes']:
+                tmp = {}
+                for k in d:
+                    if k == 'id':
+                         tmp['id'] = d[k]
+                    if k == 'labels':
+                        tmp['type'] = d[k][0]
+                    if k == 'properties':
+                        for key in d[k]:
+                            if key == 'type':
+                                tmp['value'] = d[k][key]
+                            else:
+                                tmp[key] = d[k][key]
+                data.append(tmp)
 
     return jsonify(data)
 
@@ -116,16 +104,22 @@ def get_homepage():
     Default template
     '''
     number_of_indicator_by_type = get_number_of_indicator_by_type()
-    return render_template("dashboard.html", number_of_indicator_by_type=number_of_indicator_by_type)
+    if number_of_indicator_by_type:
+        return render_template("indicators.html", number_of_indicator_by_type=number_of_indicator_by_type)
+    else:
+        return render_template("empty.html")
 
+
+
+@app.route('/campaigns.html')
+def get_campaign_page():
+    return render_template("campaigns.html")
 
 
 
 @app.route('/graph.html')
 def get_graphpage():
     return render_template("graph.html")
-
-
 
 
 @app.route("/neo4jJson")
@@ -137,6 +131,26 @@ def get_neo4jJson():
     results = gdb.query(query, data_contents=True)
     SigmaJSON = convertNeo4jJsonToSigma(results.graph)
     return SigmaJSON
+
+
+@app.route("/get_campaigns")
+def get_campaigns():
+    campaigns = []
+    query = 'MATCH (n) return distinct n.campaign'
+    results = gdb.query(query, data_contents=True)
+    for row in results.rows:
+        campaigns.append({"campaign": row[0]})
+    return jsonify(campaigns)
+
+
+
+@app.route("/get_indicators_specific_campaign", methods=['GET'])
+def get_indicators_specific_campaign():
+    campaign = request.args.get("campaign")
+    query = 'MATCH (n) WHERE n.campaign="'+campaign+'" return n'
+    results = gdb.query(query, data_contents=True)
+    tableJSON = convertNeo4jJsonToTable(results.graph)
+    return tableJSON
 
 
 
@@ -153,7 +167,36 @@ def get_table_nodes():
 def add_node():
     Type = request.form["type"]
     Value = request.form["value"]
-    new_node = gdb.nodes.create(type=Value)
+
+    Confidence = request.form["confidence"]
+    if Confidence == "":
+        Confidence = "NULL"
+
+    Diamond_model = request.form["diamondmodel"]
+    if Diamond_model == "":
+        Diamond_model = "NULL"
+
+    Campaign = request.form["campaign"]
+    if Campaign == "":
+        Campaign  = "NULL"
+
+    FirstSeen = request.form["firstseen"]
+    if FirstSeen == "":
+        FirstSeen = "NULL"
+
+    LastSeen = request.form["lastseen"]
+    if LastSeen == "":
+        LastSeen = "NULL"
+
+    Tags = request.form["tags"]
+    if Tags == "":
+        Tags = "NULL"
+
+    Comments = request.form["comments"]
+    if Comments == "":
+        Comments = "NULL"
+
+    new_node = gdb.nodes.create(type=Value, confidence=Confidence, diamond_model= Diamond_model, campaign=Campaign, first_seen=FirstSeen, last_seen=LastSeen, tags=Tags, comments=Comments)
     new_node.labels.add(Type)
     return str(new_node.id)
 
@@ -163,8 +206,8 @@ def add_node():
 @app.route('/add_property', methods=['POST'])
 def add_node_properties():
     Id = request.form['id']
-    Property_key = request.form['property_key']
-    Property_value = request.form['property_value']
+    Property_key = request.form['propertykey']
+    Property_value = request.form['propertyvalue']
     n = gdb.nodes.get(Id)
     n.set(Property_key, Property_value)
     return "Property added to the node"
@@ -260,12 +303,28 @@ def get_all_types():
     '''
     Get available type
     '''
-    output = {}
+
+    Type = {
+            "ipv4": "ipv4",
+            "ipv6": "ipv6",
+            "domain": "domain",
+            "url": "url",
+            "email": "email",
+            "hash": "hash",
+            "country": "country",
+            "entity": "entity",
+            "threat_actor": "threat_actor"
+        }
+
+
     query = 'START n=node(*) RETURN distinct labels(n)'
     results = gdb.query(query, data_contents=True)
-    for row in results.rows:
-        output[row[0][0]]=row[0][0].lower()
-    return jsonify(output)
+    if results:
+        for row in results.rows:
+            if row[0][0].lower() not in Type.values():
+                Type[row[0][0]]=row[0][0].lower()
+
+    return jsonify(Type)
 
 
 
@@ -277,10 +336,28 @@ def get_number_of_indicator_by_type():
     output = []
     query = 'START n=node(*) RETURN labels(n)'
     results = gdb.query(query, data_contents=True)
-    for row in results.rows:
-        output.append(row[0][0])
-    c = Counter(output)
+    if results:
+        for row in results.rows:
+            output.append(row[0][0])
+        c = Counter(output)
+    else:
+        c = {}
     return dict(c)
+
+
+@app.route("/get_number_of_indicator_by_type_for_specific_campaign")
+def get_number_of_indicator_by_type_for_specific_campaign():
+    campaign = request.args.get("campaign")
+    output = []
+    query = 'START n=node(*) WHERE n.campaign="'+campaign+'" RETURN labels(n)'
+    results = gdb.query(query, data_contents=True)
+    if results:
+        for row in results.rows:
+            output.append(row[0][0])
+        c = Counter(output)
+    else:
+        c = {}
+    return jsonify(dict(c))
 
 
 
