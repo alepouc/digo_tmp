@@ -4,6 +4,9 @@
     height: 89%;
     width: 100%;
 }
+
+
+
 @media (max-height: 700px) {
   #graph-container {
     width: 100%;
@@ -15,7 +18,9 @@
     padding: 5px 3px;
 }
 
-
+#modal_rightClickNode_label{
+  font-variant: small-caps;
+}
 
 .sigma-tooltip {
   max-width: 240px;
@@ -154,4 +159,10 @@
 #modal_header_rightClickNode {
     padding:35px;
     padding-top:20px;
+}
+
+
+#container #aside-container {
+    width: 85%;
+    right: -85%;
 }

@@ -12,9 +12,9 @@
 <script src="/static/assets/plugins/bootstrap-table/extensions/export/tableExport.js"></script>
 <link href="/static/assets/plugins/bootstrap-table/bootstrap-table.min.css" rel="stylesheet">
 
+
 <!--Generic Javascript Function [ OPTIONAL ]-->
 <script src="/static/assets/js/generic_js.js"></script>
-
 
 <script>
 
@@ -47,13 +47,47 @@ $(function () {
 });
 
 
+// ------------------------------------------------
+//--  When page loading, check every campaign and click on Show indicators
+// ------------------------------------------------
+$(function () {
+  $('#table-campaign').bootstrapTable('checkAll');
+  click_on_show_indicators()
+});
+
 
 // ------------------------------------------------
-//--  Actions when clicking on Show Indicators
+//--  If click on Show Indicators, execute function click_on_show_indicators()
 // ------------------------------------------------
 $(function () {
   $("#show-indicators").click(function () {
+    click_on_show_indicators();
+  });
+});
 
+
+// ------------------------------------------------
+//--  Actions when clicking on Show Graph
+// ------------------------------------------------
+$(function () {
+  $("#show-graph").click(function () {
+    var numberOfSelections = $('#table-campaign').bootstrapTable('getSelections').length;
+    var selections = $('#table-campaign').bootstrapTable('getSelections')
+    for (var i = 0; i < numberOfSelections; i++){
+      var campaign = selections[i]['campaign']
+    }
+    window.location.assign("graph.html?campaign="+campaign)
+  });
+});
+
+
+
+
+// ------------------------------------------------
+//--  Function when clicking on Show Indicators
+// ------------------------------------------------
+function click_on_show_indicators()
+{
     var numberOfSelections = $('#table-campaign').bootstrapTable('getSelections').length;
     var selections = $('#table-campaign').bootstrapTable('getSelections')
     var indicators_selected;
@@ -67,7 +101,7 @@ $(function () {
 
     for (var i = 0; i < numberOfSelections; i++){
       campaign = selections[i]['campaign']
-      data = get_indicators_specific_campaign(campaign)
+      data = get_indicators_specific_campaign_for_table_view(campaign)
         if (i == 0){
           indicators_selected = data
         } else {
@@ -165,11 +199,10 @@ $(function () {
       resize:true
      });
 
+}
 
 
 
-  });
-});
 
 
 </script>
@@ -215,6 +248,7 @@ $(function () {
             <div id="button-toolbar-campaign">
               <button id="delete-row" class="btn btn-danger" disabled><i class="pli-cross"></i> Delete</button>
               <button id="show-indicators" class="btn btn-default"><i class="pli-cross"></i> Show Indicators</button>
+              <button id="show-graph" class="btn btn-default"><i class="pli-cross"></i> Show Graph</button>
             </div>
           </div>
           <table id="table-campaign" class="add-niftycheck"

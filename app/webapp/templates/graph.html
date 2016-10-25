@@ -36,16 +36,21 @@
 <script src="/static/linkurious/plugins/sigma.layouts.forceAtlas2/worker.js"></script>
 <script src="/static/linkurious/plugins/sigma.layouts.forceAtlas2/supervisor.js"></script>
 
+<script src="/static/assets/js/jquery-url.min.js"></script>
+
+
 {% extends "index.html" %}
 {% block content %}
+
+
 
  <!-- Personnal import -->
 <link href="/static/assets/css/ajaxload.css" rel="stylesheet" type="text/css" />
 <link rel="stylesheet" type="text/css" href="/static/assets/css/graph.css" media="screen" />
-<link rel="stylesheet" type="text/css" href="/static/assets/css/dashboard.css" media="screen" />
-
-<!--Generic Javascript Function [ OPTIONAL ]-->
 <script src="/static/assets/js/generic_js.js"></script>
+
+
+
 
 
 
@@ -54,7 +59,7 @@
 <!-- #################################################################### -->
 <script>
 var all_types;
-var all_available_actions;
+var all_digos;
 var all_nodes;
 var ajax_return;
 var node_selected = {};
@@ -68,8 +73,7 @@ var node_selected = {};
 <! #################################################################### -->
 
 <!-- Graph container -->
-<div id="graph-container">
-</div>
+<div id="graph-container"></div>
 
 <!--  Zoom -->
 <div class="btn-group" id="zoomController" role="group" aria-label="zoomController" style="margin-bottom: 20px;">
@@ -80,8 +84,6 @@ var node_selected = {};
 
 <!--  Ajax - loading gif page  -->
 <div class="ajaxload"></div>
-
-
 
 
 
@@ -188,19 +190,32 @@ var config = {
 
     //  Right click - Show details of nodes + edit node + delete node + add property + add relationship ... -->
     show: 'rightClickNode',
+    cssClass: 'sigma-tooltip',
     autoadjust: true,
     renderer: function(node) {
       node_selected = node
       node.degree = this.degree(node.id);
+
+      digos = "";
+      type = node['properties']['type'].toLowerCase();
+      var digos = "";
+      for (var row in all_digos[type]) {
+        digos += '<li id="link-actions"><a href="#">'+all_digos[type][row]+'</a></li>'
+      }
+
+      if (digos == ""){
+        digos = '<li><a href="#">No digo available</a></li>'
+      }
+
       output = `
-      <div class="arrow" id="modal_rightClickNode" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="arrow" id="modal_rightClickNode" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"></div>
         <div class="modal-dialog" id="modal_dialog_rightClickNode">
           <div class="modal-content">
             <div class="modal-header" id="modal_header_rightClickNode">
-              <div class="col-md-8">
-                <h4 class="modal-title" id="myModalLabel">Type: `+node.properties['type']+`</h4>
+              <div class="col-md-6">
+                <h4 class="modal-title" id="modal_rightClickNode_label">Type: `+node.properties['type']+`</h4>
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <div class="btn-group btn-group-sm">
                     <button class="btn btn-mint btn-active-purple dropdown-toggle" data-toggle="dropdown" type="button">
                         Actions <i class="dropdown-caret"></i>
@@ -210,6 +225,16 @@ var config = {
                         <li id="delete_node" value="`+node.id+`"><a href="#">Delete Node</a></li>
                         <li id="add_relationship" value="`+node.id+`"><a href="#">Add Relationship</a></li>
                         <li id="add_property" value="`+node.id+`"><a href="#">Add Property</a></li>
+                    </ul>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-mint btn-active-purple dropdown-toggle" data-toggle="dropdown" type="button">
+                        Digos <i class="dropdown-caret"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        `+digos+`
                     </ul>
                 </div>
               </div>
@@ -250,37 +275,13 @@ var config = {
             </div>
           </div>
         </div>
-      </div>`;
+      `;
       return output
     }
-
-  }, {
-
-
-      //  Double click  - Show actions on aside -->
-      show: 'doubleClickNode',
-      renderer: function(node) {
-        node_selected = node
-        actions = "";
-        type = node['properties']['type'].toLowerCase();
-        var actions = "";
-        var count = 0;
-        for (var row in all_available_actions[type]) {
-          count += 1;
-        }
-        actions += '<p class="pad-hor mar-top text-semibold text-main"><span class="pull-right badge badge-warning">'+count+'</span> Available Actions</p>'
-        for (var row in all_available_actions[type]) {
-          actions += '<div id="aside-content_tab1" class="list-group bg-trans"><a href="#" id="link-actions" class="list-group-item"><span class="badge badge-info badge-icon badge-fw pull-left"></span>'+all_available_actions[type][row]+'</a>'
-        }
-        actions += '</div>'
-        $("#aside-content_tab1").html(actions);
-        $.niftyAside('toggleHideShow');
-        return ""
-      }
   }],
   stage: [{
 
-
+    autoadjust: true,
     //  Right click on background - Add node  -->
     renderer: function() {
       output = '<div class="arrow"></div>' +
@@ -297,7 +298,14 @@ var config = {
 };
 
 
-
+parameters_for_results = "";
+parameters = url('?');
+for (parameter_key in parameters){
+  if (parameter_key == "campaign"){
+    campaign = parameters[parameter_key];
+    parameters_for_results = 'campaign='+campaign;
+  }
+}
 
 
 //-- #################################################################### -->
@@ -310,7 +318,7 @@ function sigma_json_parser(refresh){
   var count = {}
 
   sigma.parsers.json(
-     '/get_neo4j_json_for_graph',
+     '/get_neo4j_json_for_graph?'+parameters_for_results,
      s,
      function() {
          var i,
@@ -393,16 +401,16 @@ $(document).on({
 //-- #################################################################### -->
 //--  Get the whole list of actions available  -->
 //-- #################################################################### -->
-function write_all_available_actions_in_aside(){
-  all_available_actions = get_all_digos()
+function write_all_digos_in_aside(){
+  all_digos = get_all_digos()
   var actions = "";
   var count = 0;
-  for (var row in all_available_actions) {
+  for (var row in all_digos) {
    count += 1;
   }
   actions += '<p class="pad-hor mar-top text-semibold text-main"><span class="pull-right badge badge-warning">'+count+'</span> List of Actions</p>';
-  for (var row in all_available_actions) {
-   actions += '<div id="aside-content_tab2" class="list-group bg-trans"><a href="#" class="list-group-item"><span class="badge badge-info badge-icon badge-fw pull-left"></span>'+all_available_actions[row]+'</a>';
+  for (var row in all_digos) {
+   actions += '<div id="aside-content_tab2" class="list-group bg-trans"><a href="#" class="list-group-item"><span class="badge badge-info badge-icon badge-fw pull-left"></span>'+all_digos[row]+'</a>';
   }
   actions += '</div>'
   $("#aside-content_tab2").html(actions);
@@ -419,7 +427,7 @@ function beginning_graph_page(){
   sigma_json_parser(false);
   all_types = get_all_nodes_types(false);
   setTimeout( function timer(){
-    write_all_available_actions_in_aside();
+    write_all_digos_in_aside();
   }, 500);
 }
 
@@ -431,7 +439,7 @@ beginning_graph_page()
 //--  Refresh function  -->
 //-- #################################################################### -->
 function refresh_graph(time){
-  write_all_available_actions_in_aside(false);
+  write_all_digos_in_aside(false);
   all_types = get_all_nodes_types(false);
   loading_gif(time);
   sigma_json_parser(false);
@@ -668,7 +676,7 @@ $(document).on('click', '#edit_node', function() {
         <input type=text class="form-control modal-form-input" name="key_`+count_result_edit+`" value="value" readonly></input>
       </div>
       <div class="col-md-6">
-        <input type=text class="form-control modal-form-input" name="value_`+count_result_edit+`" value=`+node_selected.label+` pattern="^[a-zA-Z0-9_-\s]*$" data-bv-regexp-message="The value cannot contain special character"></input>
+        <input type=text class="form-control modal-form-input" name="value_`+count_result_edit+`" value=`+node_selected.label+` pattern="^[a-zA-Z0-9_.-\s]*$" data-bv-regexp-message="The value cannot contain special character"></input>
       </div>
     </div>`;
   count_result_edit += 1;
@@ -681,7 +689,7 @@ $(document).on('click', '#edit_node', function() {
             <input type=text class="form-control modal-form-input" name="key_`+count_result_edit+`" value=`+row+` readonly></input>
           </div>
           <div class="col-md-6">
-            <input type=text class="form-control modal-form-input" name="value_`+count_result_edit+`" value=`+node_selected.properties[row]+` pattern="^[a-zA-Z0-9_-\s]*$" data-bv-regexp-message="The value cannot contain special character"></input>
+            <input type=text class="form-control modal-form-input" name="value_`+count_result_edit+`" value=`+node_selected.properties[row]+` pattern="^[a-zA-Z0-9_.-\s]*$" data-bv-regexp-message="The value cannot contain special character"></input>
           </div>
         </div>`;
     } else {
@@ -691,7 +699,7 @@ $(document).on('click', '#edit_node', function() {
             <input type=text class="form-control modal-form-input" name="key_`+count_result_edit+`" value=`+row+` pattern="^[a-zA-Z][a-zA-Z0-9_-]*$" data-bv-regexp-message="The key cannot start with a number of special character"></input>
           </div>
           <div class="col-md-6">
-            <input type=text class="form-control modal-form-input" name="value_`+count_result_edit+`" value=`+node_selected.properties[row]+` pattern="^[a-zA-Z0-9_-\s]*$" data-bv-regexp-message="The key cannot start with a number of special character"></input>
+            <input type=text class="form-control modal-form-input" name="value_`+count_result_edit+`" value=`+node_selected.properties[row]+` pattern="^[a-zA-Z0-9_.-\s]*$" data-bv-regexp-message="The key cannot start with a number of special character"></input>
           </div>
         </div>`;
     }
@@ -769,16 +777,16 @@ $(document).on('click', '#link-actions', function() {
     output += `
       <div class="form-group">
         <div class="col-md-1">
-          <input type="checkbox" class="form-control modal-form-input" name="node_check_`+count_result_action+`" value="`+key+`;`+json_result[key]+`">
+          <input type="checkbox" class="form-control modal-form-input" name="node_check_`+count_result_action+`" value="`+key+`;`+json_result[key]+`" pattern="^[a-zA-Z][a-zA-Z0-9_-]*$" data-bv-regexp-message="The key cannot start with a number of special character">
         </div>
         <div class="col-md-1">
-          <input type="checkbox" class="form-control modal-form-input" name="prop_check_`+count_result_action+`" value="`+key+`;`+json_result[key]+`">
+          <input type="checkbox" class="form-control modal-form-input" name="prop_check_`+count_result_action+`" value="`+key+`;`+json_result[key]+`" pattern="^[a-zA-Z0-9_.-\s]*$" data-bv-regexp-message="The value cannot contain special character">
         </div>
         <div class="col-md-5">
-          <input type=text class="form-control modal-form-input" id="key-modal" name="node_key_`+count_result_action+`" value=`+key+`></input>
+          <input type=text class="form-control modal-form-input" id="key-modal" name="node_key_`+count_result_action+`" value=`+key+` pattern="^[a-zA-Z][a-zA-Z0-9_-]*$" data-bv-regexp-message="The key cannot start with a number of special character"></input>
         </div>
         <div class="col-md-5">
-          <input type=text class="form-control modal-form-input" id="value-modal" name="node_value_`+count_result_action+`" value=`+json_result[key]+`></input>
+          <input type=text class="form-control modal-form-input" id="value-modal" name="node_value_`+count_result_action+`" value=`+json_result[key]+` pattern="^[a-zA-Z0-9_.-\s]*$" data-bv-regexp-message="The value cannot contain special character"></input>
         </div>
       </div>`;
   }

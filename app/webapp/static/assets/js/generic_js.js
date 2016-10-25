@@ -176,12 +176,11 @@ function get_all_campaigns(){
 }
 
 
-
 // ------------------------------------------------
-//--  Get indicators for specific campaign
+//--  Get indicators for specific campaign for table
 // ------------------------------------------------
-function get_indicators_specific_campaign(campaign){
-  ajax_function("get_indicators_specific_campaign","GET", 'campaign='+campaign, false).done(function(json) {
+function get_indicators_specific_campaign_for_table_view(campaign){
+  ajax_function("get_indicators_specific_campaign_for_table_view","GET", 'campaign='+campaign, false).done(function(json) {
     data = json;
   });
   return data;
@@ -189,7 +188,7 @@ function get_indicators_specific_campaign(campaign){
 
 
 // ------------------------------------------------
-//--  Get indicators by type for specific campaign
+//--  Get indicators by node type for specific campaign
 // ------------------------------------------------
 function get_number_of_indicator_by_node_type_for_specific_campaign(campaign){
   ajax_function("get_number_of_indicator_by_node_type_for_specific_campaign","GET", 'campaign='+campaign, false).done(function(json) {

@@ -100,10 +100,15 @@ def convertNeo4jJsonToTable(neo4jJson):
 #########################################
 @app.route("/get_neo4j_json_for_graph")
 def get_neo4j_json_for_graph():
-    query = 'MATCH (n) OPTIONAL MATCH (n)-[r]-() return n,r'
+    if request.args.get("campaign"):
+        campaign = request.args.get("campaign")
+
+    query = 'MATCH (n) OPTIONAL MATCH (n)-[r]-() WHERE n.campaign="'+campaign+'" return n,r'
+    print(query)
     results = gdb.query(query, data_contents=True)
     SigmaJSON = convertNeo4jJsonToSigma(results.graph)
     return SigmaJSON
+
 
 
 # Get neo4j JSON for table
@@ -130,15 +135,17 @@ def get_all_campaigns():
 
 
 
-# Get indicators for specific campaign
+# Get indicators for specific campaign for table view
 #########################################
-@app.route("/get_indicators_specific_campaign", methods=['GET'])
-def get_indicators_specific_campaign():
+@app.route("/get_indicators_specific_campaign_for_table_view", methods=['GET'])
+def get_indicators_specific_campaign_for_table_view():
     campaign = request.args.get("campaign")
     query = 'MATCH (n) WHERE n.campaign="'+campaign+'" return n'
     results = gdb.query(query, data_contents=True)
     tableJSON = convertNeo4jJsonToTable(results.graph)
     return tableJSON
+
+
 
 
 # Get number of indicator by node type for specific campaign

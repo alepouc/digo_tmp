@@ -4,10 +4,3 @@
     font-size: 1.2rem;
     line-height: 1;
 }
-
-
-
-#container #aside-container {
-    width: 85%;
-    right: -85%;
-}
