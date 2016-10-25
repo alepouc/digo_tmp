@@ -42,6 +42,10 @@
  <!-- Personnal import -->
 <link href="/static/assets/css/ajaxload.css" rel="stylesheet" type="text/css" />
 <link rel="stylesheet" type="text/css" href="/static/assets/css/graph.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="/static/assets/css/dashboard.css" media="screen" />
+
+<!--Generic Javascript Function [ OPTIONAL ]-->
+<script src="/static/assets/js/generic_js.js"></script>
 
 
 
@@ -50,7 +54,7 @@
 <!-- #################################################################### -->
 <script>
 var all_types;
-var all_actions;
+var all_available_actions;
 var all_nodes;
 var ajax_return;
 var node_selected = {};
@@ -59,19 +63,32 @@ var node_selected = {};
 
 
 
+<!-- #################################################################### -->
+<!--  HTML
+<! #################################################################### -->
 
-<!-- #################################################################### -->
-<!--  Graph configuration  -->
-<!-- #################################################################### -->
+<!-- Graph container -->
 <div id="graph-container">
 </div>
+
+<!--  Zoom -->
 <div class="btn-group" id="zoomController" role="group" aria-label="zoomController" style="margin-bottom: 20px;">
     <button type="button" class="btn btn-default" id="zoomIn" title="Zoom In"><i class="fa fa-search-minus"></i></button>
     <button type="button" class="btn btn-default" id="zoomReset" title="Zoom Reset"><i class="fa fa-compass"></i></button>
     <button type="button" class="btn btn-default" id="zoomOut" title="Zoom Out"><i class="fa fa-search-plus"></i></button>
-
 </div>
 
+<!--  Ajax - loading gif page  -->
+<div class="ajaxload"></div>
+
+
+
+
+
+
+<!-- #################################################################### -->
+<!--  Graph configuration  -->
+<!-- #################################################################### -->
 <script>
 var i,
     s,
@@ -90,6 +107,7 @@ var i,
         type: 'canvas'
       },
       settings: {
+
         // Labels:
         font: 'robotoregular',
         defaultLabelColor: '#2e2c2d',
@@ -156,224 +174,212 @@ var i,
 
         dragNodeStickiness: 0.01,
 
-
-
       }
     });
 
 
-    var config = {
-      node: [{
-        show: 'rightClickNode',
-        autoadjust: true,
-        renderer: function(node) {
-          node_selected = node
-          node.degree = this.degree(node.id);
-          output = `
-          <div class="arrow" id="modal_rightClickNode" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-            <div class="modal-dialog" id="modal_dialog_rightClickNode">
-              <div class="modal-content">
-                <div class="modal-header" id="modal_header_rightClickNode">
-                  <div class="col-md-8">
-                    <h4 class="modal-title" id="myModalLabel">Type: `+node.properties['type']+`</h4>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-mint btn-active-purple dropdown-toggle" data-toggle="dropdown" type="button">
-                            Actions <i class="dropdown-caret"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li id="edit_node" value="`+node.id+`"><a href="#">Edit Node</a></li>
-                            <li id="delete_node" value="`+node.id+`"><a href="#">Delete Node</a></li>
-                            <li id="add_relationship" value="`+node.id+`"><a href="#">Add Relationship</a></li>
-                            <li id="add_property" value="`+node.id+`"><a href="#">Add Property</a></li>
-                        </ul>
-                    </div>
-                  </div>
-                </div>
-                <div class="modal-body" id="modal_body_rightClickNode">
-                  <form id="rightClickNode_form">
-                    <div class="form-group">
-                      <div class="col-md-4">
-                        <label class="modal-form-label">id</label>
-                      </div>
-                      <div class="col-md-8">
-                        <label class="modal-form-label">`+node.id+`</label>
-                      </div>
-                    </div>
-                    <div class="form-group">
-                      <div class="col-md-4">
-                        <label class="modal-form-label">value</label>
-                      </div>
-                      <div class="col-md-8">
-                        <label class="modal-form-label">`+node.label+`</label>
-                      </div>
-                    </div>`;
-          for (var row in node.properties){
-            if (row != 'type'){
-              output += `
-              <div class="form-group">
-                <div class="col-md-4">
-                  <label class="modal-form-label">`+row+`</label>
-                </div>
-                <div class="col-md-8">
-                  <label class="modal-form-label">`+node.properties[row]+`</label>
-                </div>
-              </div>`;
-            }
-          }
 
+// #################################################################### -->
+//  Action when clicking on nodes - edges  -->
+// #################################################################### -->
 
-          output +=`
-                  </form>
+var config = {
+  node: [{
+
+    //  Right click - Show details of nodes + edit node + delete node + add property + add relationship ... -->
+    show: 'rightClickNode',
+    autoadjust: true,
+    renderer: function(node) {
+      node_selected = node
+      node.degree = this.degree(node.id);
+      output = `
+      <div class="arrow" id="modal_rightClickNode" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog" id="modal_dialog_rightClickNode">
+          <div class="modal-content">
+            <div class="modal-header" id="modal_header_rightClickNode">
+              <div class="col-md-8">
+                <h4 class="modal-title" id="myModalLabel">Type: `+node.properties['type']+`</h4>
+              </div>
+              <div class="col-md-4">
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-mint btn-active-purple dropdown-toggle" data-toggle="dropdown" type="button">
+                        Actions <i class="dropdown-caret"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li id="edit_node" value="`+node.id+`"><a href="#">Edit Node</a></li>
+                        <li id="delete_node" value="`+node.id+`"><a href="#">Delete Node</a></li>
+                        <li id="add_relationship" value="`+node.id+`"><a href="#">Add Relationship</a></li>
+                        <li id="add_property" value="`+node.id+`"><a href="#">Add Property</a></li>
+                    </ul>
                 </div>
               </div>
             </div>
+            <div class="modal-body" id="modal_body_rightClickNode">
+              <form id="rightClickNode_form">
+                <div class="form-group">
+                  <div class="col-md-4">
+                    <label class="modal-form-label">id</label>
+                  </div>
+                  <div class="col-md-8">
+                    <label class="modal-form-label">`+node.id+`</label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="col-md-4">
+                    <label class="modal-form-label">value</label>
+                  </div>
+                  <div class="col-md-8">
+                    <label class="modal-form-label">`+node.label+`</label>
+                  </div>
+                </div>`;
+      for (var row in node.properties){
+        if (row != 'type'){
+          output += `
+          <div class="form-group">
+            <div class="col-md-4">
+              <label class="modal-form-label">`+row+`</label>
+            </div>
+            <div class="col-md-8">
+              <label class="modal-form-label">`+node.properties[row]+`</label>
+            </div>
           </div>`;
-          return output
         }
+      }
+      output +=`
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>`;
+      return output
+    }
 
-      }, {
-          show: 'doubleClickNode',
-          renderer: function(node) {
-            node_selected = node
-            actions = "";
-            type = node['properties']['type'].toLowerCase();
-            var actions = "";
-            var count = 0;
-            for (var row in all_actions[type]) {
-              count += 1;
-            }
-            actions += '<p class="pad-hor mar-top text-semibold text-main"><span class="pull-right badge badge-warning">'+count+'</span> Available Actions</p>'
-            for (var row in all_actions[type]) {
-              actions += '<div id="aside-content_tab1" class="list-group bg-trans"><a href="#" id="link-actions" class="list-group-item"><span class="badge badge-info badge-icon badge-fw pull-left"></span>'+all_actions[type][row]+'</a>'
-            }
-            actions += '</div>'
-            $("#aside-content_tab1").html(actions);
-            $.niftyAside('toggleHideShow');
-            return ""
-          }
-      }],
-      stage: [
-      {
-        renderer: function() {
-          output = '<div class="arrow"></div>' +
-          ' <div class="sigma-tooltip-header">Menu</div>' +
-          '  <div class="sigma-tooltip-body">' +
-          '    <table>' +
-          '      <tr><th id="add_node"><a href="#">Add a node</a></th><td></td></tr>' +
-          '    </table>' +
-          '  </div>' +
-          '  <div class="sigma-tooltip-footer"></div>'
-          return output
+  }, {
+
+
+      //  Double click  - Show actions on aside -->
+      show: 'doubleClickNode',
+      renderer: function(node) {
+        node_selected = node
+        actions = "";
+        type = node['properties']['type'].toLowerCase();
+        var actions = "";
+        var count = 0;
+        for (var row in all_available_actions[type]) {
+          count += 1;
         }
-      }]
-    };
+        actions += '<p class="pad-hor mar-top text-semibold text-main"><span class="pull-right badge badge-warning">'+count+'</span> Available Actions</p>'
+        for (var row in all_available_actions[type]) {
+          actions += '<div id="aside-content_tab1" class="list-group bg-trans"><a href="#" id="link-actions" class="list-group-item"><span class="badge badge-info badge-icon badge-fw pull-left"></span>'+all_available_actions[type][row]+'</a>'
+        }
+        actions += '</div>'
+        $("#aside-content_tab1").html(actions);
+        $.niftyAside('toggleHideShow');
+        return ""
+      }
+  }],
+  stage: [{
 
-</script>
+
+    //  Right click on background - Add node  -->
+    renderer: function() {
+      output = '<div class="arrow"></div>' +
+      ' <div class="sigma-tooltip-header">Menu</div>' +
+      '  <div class="sigma-tooltip-body">' +
+      '    <table>' +
+      '      <tr><th id="add_node"><a href="#">Add a node</a></th><td></td></tr>' +
+      '    </table>' +
+      '  </div>' +
+      '  <div class="sigma-tooltip-footer"></div>'
+      return output
+    }
+  }]
+};
 
 
 
-<!-- #################################################################### -->
-<!--  Sigma JSON Parser  -->
-<!-- #################################################################### -->
 
-<script>
+
+//-- #################################################################### -->
+//--  Sigma JSON Parser  -->
+//-- #################################################################### -->
 
 function sigma_json_parser(refresh){
 
-    var color = {
-              "edges":"#A5ABB6",
-              "ipv4":"#FF756E",
-              "ipv6":"#DE9BF9",
-              "domain": "#68BDF6",
-              "email": "#6DCE9E",
-              "hash": "#FFD86E",
-              "country": "#FF756E",
-              "entity": "#FB95AF",
-              "threat_actor": "#A5ABB6"
-            }
 
-    var count = {}
+  var count = {}
 
-    //
-    // Get Neo4j JSON and parse it
-    //
-    sigma.parsers.json(
-       '/neo4jJson',
-       s,
-       function() {
-           var i,
-           nodes = s.graph.nodes();
-           all_nodes = nodes
-           edges = s.graph.edges();
-           len_nodes = nodes.length;
-           len_edges = edges.length;
+  sigma.parsers.json(
+     '/get_neo4j_json_for_graph',
+     s,
+     function() {
+         var i,
+         nodes = s.graph.nodes();
+         all_nodes = nodes
+         edges = s.graph.edges();
+         len_nodes = nodes.length;
+         len_edges = edges.length;
 
-           count['nodes'] = 0;
-           count['relation'] = 0;
-           for (i = 0; i < len_nodes; i++) {
-             if(count[nodes[i].properties['type']]){
-               count[nodes[i].properties['type']] += 1;
+         count['nodes'] = 0;
+         count['relation'] = 0;
+         for (i = 0; i < len_nodes; i++) {
+           if(count[nodes[i].properties['type']]){
+             count[nodes[i].properties['type']] += 1;
+           }
+           else {
+              count[nodes[i].properties['type']] = 1;
+           }
+           count['nodes'] += 1;
+
+           for (var key in colors_nodes){
+             if(nodes[i].properties['type'] == key){
+                nodes[i].color = colors_nodes[key]
              }
-             else {
-                count[nodes[i].properties['type']] = 1;
-             }
-             count['nodes'] += 1;
-
-             for (var key in color){
-               if(nodes[i].properties['type'] == key){
-                  nodes[i].color = color[key]
-               }
-             }
-             nodes[i].size = s.graph.degree(nodes[i].id);
            }
-
-           for (i = 0; i < len_edges; i++) {
-               edges[i].label = edges[i].type
-               edges[i].size = 0.2
-               edges[i].color = color.edges
-               count['relation'] += 1;
-           }
-
-           // Refresh the display:
-           s.refresh();
-
-           // ForceAtlas Layout
-           if(refresh == false){
-             s.startForceAtlas2({gravity:150,scalingRatio:70,slowDown:1000000});
-             setTimeout(function(){s.stopForceAtlas2();},1000);
-           }
-
-           cornerbottomright = ""
-           for (var key in count){
-             cornerbottomright += key+'('+count[key]+')&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
-           }
-           $("#cornerbottomright").html(cornerbottomright);
+           nodes[i].size = s.graph.degree(nodes[i].id);
          }
-    );
 
-    // Instanciate the ActiveState plugin:
-    var activeState = sigma.plugins.activeState(s);
-    // Initialize the dragNodes plugin:
-    var dragListener = sigma.plugins.dragNodes(s, s.renderers[0], activeState);
+         for (i = 0; i < len_edges; i++) {
+             edges[i].label = edges[i].type
+             edges[i].size = 0.2
+             edges[i].color = colors_edges
+             count['relation'] += 1;
+         }
 
-    // Instanciate the tooltips plugin with a Mustache renderer for node tooltips:
-    var tooltips = sigma.plugins.tooltips(s, s.renderers[0], config);
+         // Refresh the display:
+         s.refresh();
+
+         // ForceAtlas Layout
+         if(refresh == false){
+           s.startForceAtlas2({gravity:150,scalingRatio:70,slowDown:1000000});
+           setTimeout(function(){s.stopForceAtlas2();},1000);
+         }
+
+         cornerbottomright = ""
+         for (var key in count){
+           cornerbottomright += key+'('+count[key]+')&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'
+         }
+         $("#cornerbottomright").html(cornerbottomright);
+       }
+  );
+
+  // Instanciate the ActiveState plugin:
+  var activeState = sigma.plugins.activeState(s);
+  // Initialize the dragNodes plugin:
+  var dragListener = sigma.plugins.dragNodes(s, s.renderers[0], activeState);
+  // Instanciate the tooltips plugin with a Mustache renderer for node tooltips:
+  var tooltips = sigma.plugins.tooltips(s, s.renderers[0], config);
 
 }
 
 
-</script>
 
 
 
-<!-- #################################################################### -->
-<!--  Used for showing the loading gif  -->
-<!-- #################################################################### -->
-<script>
 
-
+//-- #################################################################### -->
+//--  Used for showing the loading gif  -->
+//-- #################################################################### -->
 $body = $("body");
 $(document).on({
     ajaxStart: function() { $body.addClass("loading");    },
@@ -381,112 +387,62 @@ $(document).on({
 });
 
 
-function loading_gif(time){
-  $body.addClass("loading");
-  setTimeout(function(){
-      $body.removeClass("loading");
-  }, time);
-}
 
 
-ajax_function = function(uri, method, data, async_value) {
-  if(async_value == undefined)
-  {
-    async_value = true;
+
+//-- #################################################################### -->
+//--  Get the whole list of actions available  -->
+//-- #################################################################### -->
+function write_all_available_actions_in_aside(){
+  all_available_actions = get_all_digos()
+  var actions = "";
+  var count = 0;
+  for (var row in all_available_actions) {
+   count += 1;
   }
-  var request = {
-      url: uri,
-      type: method,
-      cache: false,
-      async: async_value,
-      data: data,
-      success: function(d){
-        ajax_return = d
-      }
-  };
-  return $.ajax(request);
+  actions += '<p class="pad-hor mar-top text-semibold text-main"><span class="pull-right badge badge-warning">'+count+'</span> List of Actions</p>';
+  for (var row in all_available_actions) {
+   actions += '<div id="aside-content_tab2" class="list-group bg-trans"><a href="#" class="list-group-item"><span class="badge badge-info badge-icon badge-fw pull-left"></span>'+all_available_actions[row]+'</a>';
+  }
+  actions += '</div>'
+  $("#aside-content_tab2").html(actions);
 }
 
-</script>
-<div class="ajaxload"></div>
 
 
 
-<!-- #################################################################### -->
-<!--  Get the whole list of actions available  -->
-<!-- #################################################################### -->
-<script>
-function get_all_actions(async){
-  ajax_function("get_all_actions","GET", false, async).done(function(json) {
-   all_actions = json;
-   var actions = "";
-   var count = 0;
-   for (var row in all_actions) {
-     count += 1;
-   }
-   actions += '<p class="pad-hor mar-top text-semibold text-main"><span class="pull-right badge badge-warning">'+count+'</span> List of Actions</p>';
-   for (var row in all_actions) {
-     actions += '<div id="aside-content_tab2" class="list-group bg-trans"><a href="#" class="list-group-item"><span class="badge badge-info badge-icon badge-fw pull-left"></span>'+all_actions[row]+'</a>';
-   }
-   actions += '</div>'
-   $("#aside-content_tab2").html(actions);
-  });
-}
 
-</script>
-
-
-
-<!-- #################################################################### -->
-<!--  Get the whole list of types  -->
-<!-- #################################################################### -->
-<script>
-function get_all_types(async){
-  ajax_function("get_all_types","GET", false, async).done(function(data) {
-   all_types = data
-  });
-}
-</script>
-
-
-<!-- #################################################################### -->
-<!--  Beginning of the graph page  -->
-<!-- #################################################################### -->
-<script>
+//-- #################################################################### -->
+//--  Beginning of the graph page  -->
+//-- #################################################################### -->
 function beginning_graph_page(){
   sigma_json_parser(false);
-  get_all_types(false);
+  all_types = get_all_nodes_types(false);
   setTimeout( function timer(){
-    get_all_actions(false);
+    write_all_available_actions_in_aside();
   }, 500);
-
-
 }
 
 beginning_graph_page()
-</script>
 
 
 
-<!-- #################################################################### -->
-<!--  Refresh function  -->
-<!-- #################################################################### -->
-<script>
+//-- #################################################################### -->
+//--  Refresh function  -->
+//-- #################################################################### -->
 function refresh_graph(time){
-  get_all_actions(false);
-  get_all_types(false);
+  write_all_available_actions_in_aside(false);
+  all_types = get_all_nodes_types(false);
   loading_gif(time);
-  sigma_json_parser(true);
+  sigma_json_parser(false);
 }
-</script>
 
 
 
-<!-- #################################################################### -->
-<!--  Delete node -->
-<!-- #################################################################### -->
-<script>
 
+//-- #################################################################### -->
+//--  Delete node -->
+//-- #################################################################### -->
 $(document).on('click', '#delete_node', function() {
   BootstrapDialog.confirm({
     title: 'WARNING',
@@ -499,20 +455,19 @@ $(document).on('click', '#delete_node', function() {
     btnOKClass: 'btn-warning',
     callback: function(result) {
         if(result) {
-          ajax_function("delete_node","POST", 'id='+$("#delete_node").val(), false).complete(function(json) {
-            refresh_graph(1000);
-          });
+          id = $("#delete_node").val();
+          delete_node(id);
+          refresh_graph(500);
         }
     }
   });
 });
-</script>
 
 
-<!-- #################################################################### -->
-<!--  Action - Add a node -->
-<!-- #################################################################### -->
-<script>
+
+//-- #################################################################### -->
+//--  Action - Add a node -->
+//-- #################################################################### -->
 $(document).on('click', '#add_node', function() {
   var output = "";
   for (var row in all_types) {
@@ -555,29 +510,18 @@ $(document).on('click', '#add_node', function() {
           e.preventDefault();
           e.stopImmediatePropagation();
           var valuesToSubmit = $(this).serialize();
-          ajax_function("add_node","POST", valuesToSubmit, false).complete(function(json) {
-            $('#modal_add_new_node').modal('hide')
-            refresh_graph(1000);
-          });
+          add_node(valuesToSubmit);
+          $('#modal_add_new_node').modal('hide')
+          refresh_graph(500);
       });
   });
 });
 
 
 
-
-
-</script>
-
-
-
-
-
-
-<!-- #################################################################### -->
-<!--  Modal when adding a relationship -->
-<!-- #################################################################### -->
-<script>
+//-- #################################################################### -->
+//--  Action - Add a relationship -->
+//-- #################################################################### -->
 $(document).on('click', '#add_relationship', function() {
   var output = "";
   for (var row in all_nodes) {
@@ -620,23 +564,22 @@ $(document).on('click', '#add_relationship', function() {
           e.preventDefault();
           e.stopImmediatePropagation();
           var valuesToSubmit = $(this).serialize();
-          ajax_function("add_relationship","POST", valuesToSubmit.split('+-+',1)+'&id2='+$('#add_relationship').val(), false).complete(function(json) {
-            $('#modal_add_new_relationship').modal('hide')
-            refresh_graph(1000);
-          });
+          id1 = valuesToSubmit.split('+-+')[0].split('=')[1];
+          id2 = $('#add_relationship').val();
+          add_relationship(id1, id2);
+          $('#modal_add_new_relationship').modal('hide')
+          refresh_graph(500);
       });
   });
 });
 
-</script>
 
 
 
+//-- #################################################################### -->
+//--  Action - Add a property -->
+//-- #################################################################### -->
 
-<!-- #################################################################### -->
-<!--  Modal when adding property -->
-<!-- #################################################################### -->
-<script>
 $(document).on('click', '#add_property', function() {
 
   $('#modal_add_new_property').modal()
@@ -674,25 +617,30 @@ $(document).on('click', '#add_property', function() {
           e.preventDefault();
           e.stopImmediatePropagation();
           var valuesToSubmit = $(this).serialize();
-          ajax_function("add_property","POST", 'id='+$("#add_property").val()+'&'+valuesToSubmit, false).complete(function(json) {
-            $('#modal_add_new_property').modal('hide')
-            refresh_graph(1000);
-          });
+          id = $("#add_property").val();
+          propertykey = valuesToSubmit.split('propertykey=')[1].split('&propertyvalue')[0]
+          propertyvalue = valuesToSubmit.split('propertyvalue=')[1]
+          add_property(id, propertykey, propertyvalue)
+          $('#modal_add_new_property').modal('hide')
+          refresh_graph(500);
       });
   });
 });
 
-</script>
 
 
 
 
 
-<!-- #################################################################### -->
-<!--  Modal when editting a node -->
-<!-- #################################################################### -->
-<script>
+
+//-- #################################################################### -->
+//--  Action - Edit a node -->
+//-- #################################################################### -->
+
 $(document).on('click', '#edit_node', function() {
+
+  $("#edit_node_form").bootstrapValidator("destroy");
+
   var count_result_edit = 0;
 
   output = `
@@ -720,7 +668,7 @@ $(document).on('click', '#edit_node', function() {
         <input type=text class="form-control modal-form-input" name="key_`+count_result_edit+`" value="value" readonly></input>
       </div>
       <div class="col-md-6">
-        <input type=text class="form-control modal-form-input" name="value_`+count_result_edit+`" value=`+node_selected.label+`></input>
+        <input type=text class="form-control modal-form-input" name="value_`+count_result_edit+`" value=`+node_selected.label+` pattern="^[a-zA-Z0-9_-\s]*$" data-bv-regexp-message="The value cannot contain special character"></input>
       </div>
     </div>`;
   count_result_edit += 1;
@@ -733,17 +681,17 @@ $(document).on('click', '#edit_node', function() {
             <input type=text class="form-control modal-form-input" name="key_`+count_result_edit+`" value=`+row+` readonly></input>
           </div>
           <div class="col-md-6">
-            <input type=text class="form-control modal-form-input" name="value_`+count_result_edit+`" value=`+node_selected.properties[row]+`></input>
+            <input type=text class="form-control modal-form-input" name="value_`+count_result_edit+`" value=`+node_selected.properties[row]+` pattern="^[a-zA-Z0-9_-\s]*$" data-bv-regexp-message="The value cannot contain special character"></input>
           </div>
         </div>`;
     } else {
       output += `
         <div class="form-group">
           <div class="col-md-6">
-            <input type=text class="form-control modal-form-input" name="key_`+count_result_edit+`" value=`+row+`></input>
+            <input type=text class="form-control modal-form-input" name="key_`+count_result_edit+`" value=`+row+` pattern="^[a-zA-Z][a-zA-Z0-9_-]*$" data-bv-regexp-message="The key cannot start with a number of special character"></input>
           </div>
           <div class="col-md-6">
-            <input type=text class="form-control modal-form-input" name="value_`+count_result_edit+`" value=`+node_selected.properties[row]+`></input>
+            <input type=text class="form-control modal-form-input" name="value_`+count_result_edit+`" value=`+node_selected.properties[row]+` pattern="^[a-zA-Z0-9_-\s]*$" data-bv-regexp-message="The key cannot start with a number of special character"></input>
           </div>
         </div>`;
     }
@@ -758,140 +706,139 @@ $(document).on('click', '#edit_node', function() {
       </div>
     </div>`;
 
+  // pattern="^[a-zA-Z][a-zA-Z0-9_-]*$" data-bv-regexp-message="The key cannot start with a number of special character"
   $('#edit_node_form').html(output);
-  $('#modal_edit_node').modal()
+  $('#modal_edit_node').modal();
+
 
   $(document).ready(function() {
     $('#edit_node_form').bootstrapValidator({
-        message: 'This value is not valid',
-        feedbackIcons: {
-          valid: 'glyphicon glyphicon-ok',
-          invalid: 'glyphicon glyphicon-remove',
-          validating: 'glyphicon glyphicon-refresh'
-        },
-        excluded: [':disabled']
-      })
-      .on('success.form.bv', function(e) {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-          var array = {}
-          for(i=0; i<count_result_edit; i++){
-            key = $('input[name="key_'+i+'"]').val();
-            value = $('input[name="value_'+i+'"]').val();
-            array[key] = value;
-          }
-          ajax_function("edit_node","POST", array, false).complete(function(json) {
-            $('#modal_edit_node').modal('hide')
-            refresh_graph(1000);
-          });
+      message: 'This value is not valid',
+      feedbackIcons: {
+        valid: 'glyphicon glyphicon-ok',
+        invalid: 'glyphicon glyphicon-remove',
+        validating: 'glyphicon glyphicon-refresh'
+      },
+      excluded: [':disabled']
+    })
+    .on('success.form.bv', function(e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        var array = {}
+        for(i=0; i<count_result_edit; i++){
+          key = $('input[name="key_'+i+'"]').val();
+          value = $('input[name="value_'+i+'"]').val();
+          array[key] = value;
+        }
+        edit_node(array);
+        $('#modal_edit_node').modal('hide')
+        refresh_graph(500);
       });
   });
 });
 
-</script>
 
 
+//-- #################################################################### -->
+//--  Action - Results from actions -->
+//-- #################################################################### -->
 
-
-<!-- #################################################################### -->
-<!--  Modal when receiving result from an action -->
-<!-- #################################################################### -->
-<script>
 $(document).on('click', '#link-actions', function() {
   var count_result_action = 0;
-  ajax_function("action","GET", "action="+$("#link-actions").text()+"&input="+node_selected.label, true).done(function(data) {
-    output = `
-      <div class="form-group">
-        <div class="col-md-1">
-          <label class="modal-form-label">Node</label>
-        </div>
-        <div class="col-md-1">
-          <label class="modal-form-label">Property</label>
-        </div>
-        <div class="col-md-5">
-          <label class="modal-form-label">Type</label>
-        </div>
-        <div class="col-md-5">
-          <label class="modal-form-label">Details</label>
-        </div>
-      </div>`;
-    json_result = data["json_result"];
-    for (var key in json_result) {
-      count_result_action += 1;
-      output += `
-        <div class="form-group">
-          <div class="col-md-1">
-            <input type="checkbox" class="form-control modal-form-input" name="node_check_`+count_result_action+`" value="`+key+`;`+json_result[key]+`">
-          </div>
-          <div class="col-md-1">
-            <input type="checkbox" class="form-control modal-form-input" name="prop_check_`+count_result_action+`" value="`+key+`;`+json_result[key]+`">
-          </div>
-          <div class="col-md-5">
-            <input type=text class="form-control modal-form-input" id="key-modal" name="node_key_`+count_result_action+`" value=`+key+`></input>
-          </div>
-          <div class="col-md-5">
-            <input type=text class="form-control modal-form-input" id="value-modal" name="node_value_`+count_result_action+`" value=`+json_result[key]+`></input>
-          </div>
-        </div>`;
-    }
+  action = $("#link-actions").text();
+  value = node_selected.label;
+  var data = get_digo_result(action, value);
+  output = `
+    <div class="form-group">
+      <div class="col-md-1">
+        <label class="modal-form-label">Node</label>
+      </div>
+      <div class="col-md-1">
+        <label class="modal-form-label">Property</label>
+      </div>
+      <div class="col-md-5">
+        <label class="modal-form-label">Type</label>
+      </div>
+      <div class="col-md-5">
+        <label class="modal-form-label">Details</label>
+      </div>
+    </div>`;
+  json_result = data["json_result"];
+  for (var key in json_result) {
+    count_result_action += 1;
     output += `
       <div class="form-group">
-        <div class="modal-footer">
-          <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary">Edit node</button>
+        <div class="col-md-1">
+          <input type="checkbox" class="form-control modal-form-input" name="node_check_`+count_result_action+`" value="`+key+`;`+json_result[key]+`">
+        </div>
+        <div class="col-md-1">
+          <input type="checkbox" class="form-control modal-form-input" name="prop_check_`+count_result_action+`" value="`+key+`;`+json_result[key]+`">
+        </div>
+        <div class="col-md-5">
+          <input type=text class="form-control modal-form-input" id="key-modal" name="node_key_`+count_result_action+`" value=`+key+`></input>
+        </div>
+        <div class="col-md-5">
+          <input type=text class="form-control modal-form-input" id="value-modal" name="node_value_`+count_result_action+`" value=`+json_result[key]+`></input>
         </div>
       </div>`;
+  }
+  output += `
+    <div class="form-group">
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Edit node</button>
+      </div>
+    </div>`;
 
-    $('#receive_action_form').html(output);
-    $('#modal_receive_action').modal();
-    $(document).ready(function() {
-      $('#receive_action_form').bootstrapValidator({
-          message: 'This value is not valid',
-          feedbackIcons: {
-            valid: 'glyphicon glyphicon-ok',
-            invalid: 'glyphicon glyphicon-remove',
-            validating: 'glyphicon glyphicon-refresh'
-          },
-          excluded: [':disabled']
-        })
-        .on('success.form.bv', function(e) {
-          var count = 0;
-          for(i=0; i<count_result_action; i++){
-            count += 1;
-            $('input[name="node_check_'+i+'"]:checked').each(function() {
-              type = $('input[name="node_key_'+i+'"]').val();
-              value = $('input[name="node_value_'+i+'"]').val();
-              ajax_function("add_node","POST", 'type='+type+'&value='+value+'&confidence=&diamondmodel=&campaign=&firstseen=&lastseen=&tags=&comments=', true).complete(function(data) {
-                ajax_function("add_relationship","POST", 'id1='+node_selected.id+'&id2='+ajax_return, true).complete(function(data) {
-                });
-              });
-            });
-            $('input[name="prop_check_'+i+'"]:checked').each(function() {
-              type = $('input[name="node_key_'+i+'"]').val();
-              value = $('input[name="node_value_'+i+'"]').val();
-              ajax_function("add_property","POST", 'id='+node_selected.id+'&propertykey='+type+'&propertyvalue='+value, true).complete(function(data) {
-              });
-            });
-          }
+  $('#receive_action_form').html(output);
+  $('#modal_receive_action').modal();
+
+  $(document).ready(function() {
+    $('#receive_action_form').bootstrapValidator({
+      message: 'This value is not valid',
+      feedbackIcons: {
+        valid: 'glyphicon glyphicon-ok',
+        invalid: 'glyphicon glyphicon-remove',
+        validating: 'glyphicon glyphicon-refresh'
+      },
+      excluded: [':disabled']
+    })
+    .on('success.form.bv', function(e) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      var count = 0;
+      for(i=0; i<count_result_action; i++){
+        count += 1;
+        $('input[name="node_check_'+i+'"]:checked').each(function() {
+          type = $('input[name="node_key_'+i+'"]').val();
+          value = $('input[name="node_value_'+i+'"]').val();
+          valuesToSubmit = ('type='+type+'&value='+value+'&confidence=&diamondmodel=&campaign=&firstseen=&lastseen=&tags=&comments=');
+          id1 = node_selected.id;
+          tmp = add_node(valuesToSubmit);
+          id2 = tmp.responseText
+          add_relationship(id1, id2);
         });
-      });
-
-
+        $('input[name="prop_check_'+i+'"]:checked').each(function() {
+          type = $('input[name="node_key_'+i+'"]').val();
+          value = $('input[name="node_value_'+i+'"]').val();
+          id = node_selected.id;
+          add_property(id, type, value);
+        });
+      }
+    });
   });
 });
 
 
-</script>
 
 
 
 
 
 
-<!-- #################################################################### -->
-<!--  Zoom -->
-<!-- #################################################################### -->
-<script>
+//-- #################################################################### -->
+//--  Zoom -->
+//-- #################################################################### -->
 var zoomOut = function() {
   sigma.utils.zoomTo(
       s.camera,
@@ -929,10 +876,10 @@ $(document).ready(function() {
     zoomCenter();
   });
 });
+
+
+
 </script>
-
-
-
 
 
 <!-- #################################################################### -->

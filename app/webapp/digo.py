@@ -10,7 +10,7 @@ from glob import glob
 import os
 import random
 from collections import defaultdict
-from actions import *
+from digos import *
 from collections import Counter
 
 
@@ -20,11 +20,9 @@ gdb = GraphDatabase("http://digo-db:7474/db/data", username="neo4j", password="d
 app.jinja_env.autoescape = False
 
 
+# Convert Neo4j JSON to Sigma JSON
+#########################################
 def convertNeo4jJsonToSigma(neo4jJson):
-
-    '''
-    Convert Neo4j JSON to Sigma JSON
-    '''
     nodes_j = []
     edges_j = []
     if neo4jJson:
@@ -73,10 +71,10 @@ def convertNeo4jJsonToSigma(neo4jJson):
 
 
 
+# Convert Neo4j JSON to Json table
+#########################################
 def convertNeo4jJsonToTable(neo4jJson):
-
     data = []
-
     if neo4jJson:
         for row in neo4jJson:
             for d in row['nodes']:
@@ -98,43 +96,31 @@ def convertNeo4jJsonToTable(neo4jJson):
 
 
 
-@app.route('/')
-def get_homepage():
-    '''
-    Default template
-    '''
-    number_of_indicator_by_type = get_number_of_indicator_by_type()
-    if number_of_indicator_by_type:
-        return render_template("indicators.html", number_of_indicator_by_type=number_of_indicator_by_type)
-    else:
-        return render_template("empty.html")
-
-
-
-@app.route('/campaigns.html')
-def get_campaign_page():
-    return render_template("campaigns.html")
-
-
-
-@app.route('/graph.html')
-def get_graphpage():
-    return render_template("graph.html")
-
-
-@app.route("/neo4jJson")
-def get_neo4jJson():
-    '''
-    Get Neo4j JSON
-    '''
+# Get neo4j JSON for graph
+#########################################
+@app.route("/get_neo4j_json_for_graph")
+def get_neo4j_json_for_graph():
     query = 'MATCH (n) OPTIONAL MATCH (n)-[r]-() return n,r'
     results = gdb.query(query, data_contents=True)
     SigmaJSON = convertNeo4jJsonToSigma(results.graph)
     return SigmaJSON
 
 
-@app.route("/get_campaigns")
-def get_campaigns():
+# Get neo4j JSON for table
+#########################################
+@app.route("/get_neo4j_json_for_table")
+def get_neo4j_json_for_table():
+    query = 'MATCH (n) RETURN n'
+    results = gdb.query(query, data_contents=True)
+    tableJSON = convertNeo4jJsonToTable(results.graph)
+    return tableJSON
+
+
+
+# Get all campaigns
+#########################################
+@app.route("/get_all_campaigns")
+def get_all_campaigns():
     campaigns = []
     query = 'MATCH (n) return distinct n.campaign'
     results = gdb.query(query, data_contents=True)
@@ -144,6 +130,8 @@ def get_campaigns():
 
 
 
+# Get indicators for specific campaign
+#########################################
 @app.route("/get_indicators_specific_campaign", methods=['GET'])
 def get_indicators_specific_campaign():
     campaign = request.args.get("campaign")
@@ -153,16 +141,98 @@ def get_indicators_specific_campaign():
     return tableJSON
 
 
-
-@app.route("/table_nodes")
-def get_table_nodes():
-    query = 'MATCH (n) RETURN n'
+# Get number of indicator by node type for specific campaign
+#########################################
+@app.route("/get_number_of_indicator_by_node_type_for_specific_campaign")
+def get_number_of_indicator_by_node_type_for_specific_campaign():
+    campaign = request.args.get("campaign")
+    output = []
+    query = 'START n=node(*) WHERE n.campaign="'+campaign+'" RETURN labels(n)'
     results = gdb.query(query, data_contents=True)
-    tableJSON = convertNeo4jJsonToTable(results.graph)
-    return tableJSON
+    if results:
+        for row in results.rows:
+            output.append(row[0][0])
+        c = Counter(output)
+    else:
+        c = {}
+    return jsonify(dict(c))
 
 
 
+# Get all digos
+#########################################
+@app.route('/get_all_digos')
+def get_all_digos():
+    files = glob('digos/*')
+    result_json = defaultdict(list)
+    for row in files:
+        if ".py" in row:
+            if "__init__.py" not in row:
+                action_type = row.split("_")[0].split("/")[1]
+                action = row.split("/")[1].split(".")[0]
+                result_json[action_type].append(action)
+    return jsonify(result_json)
+
+
+# Get digo result
+#########################################
+@app.route('/get_digo_result')
+def get_digo_result():
+    digo = request.args.get('digo')
+    input = request.args.get('input')
+    digos_import = __import__('digos')
+    func = getattr(digos_import, digo)
+    result = func.getResult(input)
+    output = {}
+    output["json_result"] = result
+    return jsonify(output)
+
+
+
+# Get all nodes types
+#########################################
+@app.route("/get_all_nodes_types")
+def get_all_nodes_types():
+    Type = {
+            "ipv4": "ipv4",
+            "ipv6": "ipv6",
+            "domain": "domain",
+            "url": "url",
+            "email": "email",
+            "hash": "hash",
+            "country": "country",
+            "entity": "entity",
+            "threat_actor": "threat_actor"
+        }
+
+    query = 'START n=node(*) RETURN distinct labels(n)'
+    results = gdb.query(query, data_contents=True)
+    if results:
+        for row in results.rows:
+            if row[0][0].lower() not in Type.values():
+                Type[row[0][0]]=row[0][0].lower()
+
+    return jsonify(Type)
+
+
+# Get number of indicator by node type
+#########################################
+@app.route("/get_number_of_indicator_by_node_type")
+def get_number_of_indicator_by_node_type():
+    output = []
+    query = 'START n=node(*) RETURN labels(n)'
+    results = gdb.query(query, data_contents=True)
+    if results:
+        for row in results.rows:
+            output.append(row[0][0])
+        c = Counter(output)
+    else:
+        c = {}
+    return dict(c)
+
+
+# Add node
+#########################################
 @app.route('/add_node', methods=['POST'])
 def add_node():
     Type = request.form["type"]
@@ -202,7 +272,8 @@ def add_node():
 
 
 
-
+# Add property
+#########################################
 @app.route('/add_property', methods=['POST'])
 def add_node_properties():
     Id = request.form['id']
@@ -213,8 +284,29 @@ def add_node_properties():
     return "Property added to the node"
 
 
+# Add relationship
+#########################################
+@app.route('/add_relationship', methods=['POST'])
+def add_relationship():
+    id1 = request.form["id1"]
+    id2 = request.form["id2"]
+    query = 'START a=node('+id1+'), b=node('+id2+') CREATE UNIQUE (a)-[r:relation]->(b)'
+    Id = gdb.query(query)
+    return "Relation created"
 
 
+# Delete node
+#########################################
+@app.route('/delete_node', methods=['POST'])
+def delete_node():
+    Id = request.form["id"]
+    query = 'START n=node('+Id+') OPTIONAL MATCH (n)-[r]-() DELETE n,r'
+    n = gdb.query(query)
+    return "Node delete"
+
+
+# Edit node
+#########################################
 @app.route('/edit_node', methods=['POST'])
 def edit_node():
     data = request.form
@@ -262,115 +354,36 @@ def edit_node():
 
 
 
-
-@app.route('/delete_node', methods=['POST'])
-def delete_node():
-    Id = request.form["id"]
-    query = 'START n=node('+Id+') OPTIONAL MATCH (n)-[r]-() DELETE n,r'
-    n = gdb.query(query)
-    return "Node delete"
+# Get home page
+#########################################
+@app.route('/')
+def get_home_page():
+    return render_template("dashboard.html")
 
 
+# Get campaigns page
+#########################################
+@app.route('/dashboard.html')
+def get_campaigns_page():
+    return render_template("dashboard.html")
+
+# Get graph page
+#########################################
+@app.route('/graph.html')
+def get_graph_page():
+    return render_template("graph.html")
 
 
-@app.route('/add_relationship', methods=['POST'])
-def add_relationship():
-    id1 = request.form["id1"]
-    id2 = request.form["id2"]
-    query = 'START a=node('+id1+'), b=node('+id2+') CREATE UNIQUE (a)-[r:relation]->(b)'
-    Id = gdb.query(query)
-    return "Relation created"
-
-
-
-@app.route('/get_all_actions')
-def get_all_actions():
-    files = glob('actions/*')
-    result_json = defaultdict(list)
-    for row in files:
-        if ".py" in row:
-            if "__init__.py" not in row:
-                action_type = row.split("_")[0].split("/")[1]
-                action = row.split("/")[1].split(".")[0]
-                result_json[action_type].append(action)
-    return jsonify(result_json)
-
-
-
-
-@app.route("/get_all_types")
-def get_all_types():
-    '''
-    Get available type
-    '''
-
-    Type = {
-            "ipv4": "ipv4",
-            "ipv6": "ipv6",
-            "domain": "domain",
-            "url": "url",
-            "email": "email",
-            "hash": "hash",
-            "country": "country",
-            "entity": "entity",
-            "threat_actor": "threat_actor"
-        }
-
-
-    query = 'START n=node(*) RETURN distinct labels(n)'
-    results = gdb.query(query, data_contents=True)
-    if results:
-        for row in results.rows:
-            if row[0][0].lower() not in Type.values():
-                Type[row[0][0]]=row[0][0].lower()
-
-    return jsonify(Type)
-
-
-
-@app.route("/get_number_of_indicator_by_type")
-def get_number_of_indicator_by_type():
-    '''
-    Get available type
-    '''
-    output = []
-    query = 'START n=node(*) RETURN labels(n)'
-    results = gdb.query(query, data_contents=True)
-    if results:
-        for row in results.rows:
-            output.append(row[0][0])
-        c = Counter(output)
+# Get indicators page
+#########################################
+@app.route('/indicators.html')
+def get_indicators_page():
+    number_of_indicator_by_type = get_number_of_indicator_by_type()
+    if number_of_indicator_by_type:
+        return render_template("indicators.html", number_of_indicator_by_type=number_of_indicator_by_type)
     else:
-        c = {}
-    return dict(c)
+        return render_template("empty.html")
 
-
-@app.route("/get_number_of_indicator_by_type_for_specific_campaign")
-def get_number_of_indicator_by_type_for_specific_campaign():
-    campaign = request.args.get("campaign")
-    output = []
-    query = 'START n=node(*) WHERE n.campaign="'+campaign+'" RETURN labels(n)'
-    results = gdb.query(query, data_contents=True)
-    if results:
-        for row in results.rows:
-            output.append(row[0][0])
-        c = Counter(output)
-    else:
-        c = {}
-    return jsonify(dict(c))
-
-
-
-@app.route('/action')
-def get_actions():
-    action = request.args.get('action')
-    input = request.args.get('input')
-    actions_import = __import__('actions')
-    func = getattr(actions_import, action)
-    result = func.getResult(input)
-    output = {}
-    output["json_result"] = result
-    return jsonify(output)
 
 
 

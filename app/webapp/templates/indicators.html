@@ -1,119 +1,28 @@
 {% extends "index.html" %}
 {% block content %}
 
-<!--STYLESHEET-->
-<!--=================================================-->
-
-
 <!--Morris.js [ OPTIONAL ]-->
 <link href="/static/assets/plugins/morris-js/morris.min.css" rel="stylesheet">
-
-
-<!--Morris.js [ OPTIONAL ]-->
 <script src="/static/assets/plugins/morris-js/morris.min.js"></script>
 <script src="/static/assets/plugins/morris-js/raphael-js/raphael.min.js"></script>
 
-
-<script src="/static/assets/js/chartist.min.js"></script>
-<link href="/static/assets/css/chartist.min.css" rel="stylesheet">
 
 <!--Bootstrap Table [ OPTIONAL ]-->
 <script src="/static/assets/plugins/bootstrap-table/bootstrap-table.min.js"></script>
 <script src="/static/assets/plugins/bootstrap-table/extensions/export/bootstrap-table-export.min.js"></script>
 <script src="/static/assets/plugins/bootstrap-table/extensions/export/tableExport.js"></script>
-
-<!--Bootstrap Table [ OPTIONAL ]-->
 <link href="/static/assets/plugins/bootstrap-table/bootstrap-table.min.css" rel="stylesheet">
 
+<!--Generic Javascript Function [ OPTIONAL ]-->
+<script src="/static/assets/js/generic_js.js"></script>
 
-<!--CONTENT CONTAINER-->
-<!--===================================================-->
-<div id="content-container">
-
-    <!--Page Title-->
-    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-    <div id="page-title">
-        <h1 class="page-header text-overflow">Indicators</h1>
-    </div>
-    <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-    <!--End page title-->
-
-
-
-    <!--Page content-->
-    <!--===================================================-->
-    <div id="page-content">
-
-      <div class="row">
-        <div class="col-lg-6">
-            <div class="panel">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Bar - Indicators by type</h3>
-                </div>
-                <div class="panel-body">
-
-                    <!--Morris Bar Chart placeholder -->
-                    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-                    <div id="morris-bar" style="height:212px"></div>
-                    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-6">
-            <div class="panel">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Pie - Indicators by type</h3>
-                </div>
-                <div class="panel-body">
-
-                    <!--Morris Donut Chart placeholder -->
-                    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-                    <div id="morris-donut" style="height:212px"></div>
-                    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-                </div>
-            </div>
-        </div>
-      </div>
-      <!--===================================================-->
-      <!-- End Morris Charts -->
 
 
 <script>
 
-ajax_function = function(uri, method, data, async_value) {
- if(async_value == undefined)
- {
-   async_value = true;
- }
- var request = {
-     url: uri,
-     type: method,
-     cache: false,
-     async: async_value,
-     data: data,
-     success: function(d){
-       ajax_return = d
-     }
- };
- return $.ajax(request);
-}
-
-
-
-function uniq(a) {
-    return a.sort().filter(function(item, pos, ary) {
-        return !pos || item != ary[pos - 1];
-    })
-}
-
-
 ajax_function("table_nodes","GET", false, false).done(function(json) {
   data = json
 });
-
 
 
 
@@ -153,40 +62,87 @@ $(function () {
 </script>
 
 
-      <div class="panel">
+<!--CONTENT CONTAINER-->
+<!--===================================================-->
+<div id="content-container">
+
+  <!--Page Title-->
+  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+  <div id="page-title">
+    <h1 class="page-header text-overflow">Indicators</h1>
+  </div>
+
+  <!--Page content-->
+  <!--===================================================-->
+  <div id="page-content">
+
+    <div class="row">
+      <div class="col-lg-6">
+        <div class="panel">
           <div class="panel-heading">
-              <h3 class="panel-title">Indicators Table</h3>
+            <h3 class="panel-title">Bar - Indicators by type</h3>
           </div>
           <div class="panel-body">
-              <div id="toolbar">
-                <button id="delete-row" class="btn btn-danger" disabled><i class="pli-cross"></i> Delete</button>
-                <select class="form-control">
-                    <option value="">Export Basic</option>
-                    <option value="all">Export All</option>
-                    <option value="selected">Export Selected</option>
-                </select>
-              </div>
-              <table id="table" class="add-niftycheck"
-                     data-toolbar="#delete-row"
-                     data-show-export="true"
-                     data-search="true"
-                     data-show-refresh="true"
-                     data-show-toggle="true"
-                     data-show-columns="true"
-                     data-sort-name="id"
-                     data-page-list="[5, 10, 20, 30, 50]"
-                     data-page-size="30"
-                     data-pagination="true"
-                     data-click-to-select="true"
-                     data-toolbar="#toolbar"
-                     data-show-pagination-switch="true">
-              </table>
+
+            <!--Morris Bar Chart placeholder -->
+            <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+            <div id="morris-bar" style="height:212px"></div>
+            <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
           </div>
+        </div>
       </div>
-      <!--===================================================-->
+      <div class="col-lg-6">
+        <div class="panel">
+          <div class="panel-heading">
+            <h3 class="panel-title">Pie - Indicators by type</h3>
+          </div>
+          <div class="panel-body">
 
+            <!--Morris Donut Chart placeholder -->
+            <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+            <div id="morris-donut" style="height:212px"></div>
+            <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
+          </div>
+        </div>
+      </div>
     </div>
+
+
+    <div class="panel">
+      <div class="panel-heading">
+        <h3 class="panel-title">Indicators Table</h3>
+      </div>
+      <div class="panel-body">
+        <div id="toolbar">
+          <button id="delete-row" class="btn btn-danger" disabled><i class="pli-cross"></i> Delete</button>
+          <select class="form-control">
+            <option value="">Export Basic</option>
+            <option value="all">Export All</option>
+            <option value="selected">Export Selected</option>
+          </select>
+        </div>
+        <table id="table" class="add-niftycheck"
+           data-toolbar="#delete-row"
+           data-show-export="true"
+           data-search="true"
+           data-show-refresh="true"
+           data-show-toggle="true"
+           data-show-columns="true"
+           data-sort-name="id"
+           data-page-list="[5, 10, 20, 30, 50]"
+           data-page-size="30"
+           data-pagination="true"
+           data-click-to-select="true"
+           data-toolbar="#toolbar"
+           data-show-pagination-switch="true">
+        </table>
+      </div>
+    </div>
+
+
+  </div>
     <!--===================================================-->
     <!--End page content-->
 
@@ -231,10 +187,6 @@ $(document).ready(function() {
   {% endfor %}
 
 
-  console.log(data)
-  console.log(labels)
-  console.log(ykeys)
-
    Morris.Bar({
        element: 'morris-bar',
        data: data,
@@ -259,6 +211,8 @@ $(document).ready(function() {
             {label: "{{ row }}", value: "{{ number_of_indicator_by_type[row] }}"},
           {% endfor %}
           ]
+
+    console.log(data);
 
     Morris.Donut({
         element: 'morris-donut',
