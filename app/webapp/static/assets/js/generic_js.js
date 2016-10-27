@@ -116,6 +116,18 @@ function delete_node(id){
 }
 
 
+
+// ------------------------------------------------
+//--  Delete relationship
+// ------------------------------------------------
+function delete_relationship(id){
+  ajax_function("delete_relationship","POST", 'id='+id, false).complete(function(json) {
+    data = json;
+  });
+  return data;
+}
+
+
 // ------------------------------------------------
 //--  Add node
 // ------------------------------------------------
@@ -192,6 +204,17 @@ function get_indicators_specific_campaign_for_table_view(campaign){
 // ------------------------------------------------
 function get_number_of_indicator_by_node_type_for_specific_campaign(campaign){
   ajax_function("get_number_of_indicator_by_node_type_for_specific_campaign","GET", 'campaign='+campaign, false).done(function(json) {
+    data = json;
+  });
+  return data;
+}
+
+
+// ------------------------------------------------
+//--  Get indicators by node type for specific campaign
+// ------------------------------------------------
+function get_neo4j_json_for_table(arg){
+  ajax_function("get_neo4j_json_for_table","GET", arg, false).done(function(json) {
     data = json;
   });
   return data;

@@ -36,12 +36,16 @@
 <script src="/static/linkurious/plugins/sigma.layouts.forceAtlas2/worker.js"></script>
 <script src="/static/linkurious/plugins/sigma.layouts.forceAtlas2/supervisor.js"></script>
 
-<script src="/static/assets/js/jquery-url.min.js"></script>
-
 
 {% extends "index.html" %}
 {% block content %}
 
+
+<!--Bootstrap Table [ OPTIONAL ]-->
+<script src="/static/assets/plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="/static/assets/plugins/bootstrap-table/extensions/export/bootstrap-table-export.min.js"></script>
+<script src="/static/assets/plugins/bootstrap-table/extensions/export/tableExport.js"></script>
+<link href="/static/assets/plugins/bootstrap-table/bootstrap-table.min.css" rel="stylesheet">
 
 
  <!-- Personnal import -->
@@ -63,6 +67,7 @@ var all_digos;
 var all_nodes;
 var ajax_return;
 var node_selected = {};
+var edge_selected = {};
 
 </script>
 
@@ -78,7 +83,6 @@ var node_selected = {};
 <!--  Zoom -->
 <div class="btn-group" id="zoomController" role="group" aria-label="zoomController" style="margin-bottom: 20px;">
     <button type="button" class="btn btn-default" id="zoomIn" title="Zoom In"><i class="fa fa-search-minus"></i></button>
-    <button type="button" class="btn btn-default" id="zoomReset" title="Zoom Reset"><i class="fa fa-compass"></i></button>
     <button type="button" class="btn btn-default" id="zoomOut" title="Zoom Out"><i class="fa fa-search-plus"></i></button>
 </div>
 
@@ -86,12 +90,12 @@ var node_selected = {};
 <div class="ajaxload"></div>
 
 
-
-
-<!-- #################################################################### -->
-<!--  Graph configuration  -->
-<!-- #################################################################### -->
 <script>
+
+//-- #################################################################### -->
+//--  Graph configuration  -->
+//-- #################################################################### -->
+
 var i,
     s,
     N = 100,
@@ -279,10 +283,24 @@ var config = {
       return output
     }
   }],
-  stage: [{
-
+  edge: [{
+    show: 'rightClickEdge',
     autoadjust: true,
-    //  Right click on background - Add node  -->
+    renderer: function(edge) {
+      edge_selected = edge
+      output = '<div class="arrow"></div>' +
+      ' <div class="sigma-tooltip-header">Menu</div>' +
+      '  <div class="sigma-tooltip-body">' +
+      '    <table>' +
+      '      <tr><th id="delete_relationship"><a href="#">Delete Relationship</a></th><td></td></tr>' +
+      '    </table>' +
+      '  </div>' +
+      '  <div class="sigma-tooltip-footer"></div>'
+      return output
+    }
+  }],
+  stage: [{
+    autoadjust: true,
     renderer: function() {
       output = '<div class="arrow"></div>' +
       ' <div class="sigma-tooltip-header">Menu</div>' +
@@ -298,14 +316,6 @@ var config = {
 };
 
 
-parameters_for_results = "";
-parameters = url('?');
-for (parameter_key in parameters){
-  if (parameter_key == "campaign"){
-    campaign = parameters[parameter_key];
-    parameters_for_results = 'campaign='+campaign;
-  }
-}
 
 
 //-- #################################################################### -->
@@ -318,7 +328,7 @@ function sigma_json_parser(refresh){
   var count = {}
 
   sigma.parsers.json(
-     '/get_neo4j_json_for_graph?'+parameters_for_results,
+     '/get_neo4j_json_for_graph?'+arg,
      s,
      function() {
          var i,
@@ -397,41 +407,82 @@ $(document).on({
 
 
 
-
 //-- #################################################################### -->
-//--  Get the whole list of actions available  -->
+//--  First action on the page -->
 //-- #################################################################### -->
-function write_all_digos_in_aside(){
-  all_digos = get_all_digos()
-  var actions = "";
-  var count = 0;
-  for (var row in all_digos) {
-   count += 1;
-  }
-  actions += '<p class="pad-hor mar-top text-semibold text-main"><span class="pull-right badge badge-warning">'+count+'</span> List of Actions</p>';
-  for (var row in all_digos) {
-   actions += '<div id="aside-content_tab2" class="list-group bg-trans"><a href="#" class="list-group-item"><span class="badge badge-info badge-icon badge-fw pull-left"></span>'+all_digos[row]+'</a>';
-  }
-  actions += '</div>'
-  $("#aside-content_tab2").html(actions);
+var arg = ""
+var navbar_dropdown_menu_content = '<li class="dropdown-header">Informations</li>'
+if ("{{arg}}" == "campaign"){
+  {% for row in campaign %}
+    navbar_dropdown_menu_content += '<li>'+"{{ row }}"+'</li>'
+    arg += "campaign="+"{{ row }}"+"&"
+  {% endfor %}
+  $('#navbar_dropdown_menu_content').replaceWith(navbar_dropdown_menu_content)
+  arg = arg.slice(0, -1);
 }
 
+sigma_json_parser(false);
+all_types = get_all_nodes_types(false);
+all_digos = get_all_digos();
 
 
+setTimeout( function timer(){
+  table = `
+    <div class="panel">
+      <div class="panel-heading">
+        <h3 class="panel-title">Indicators Table</h3>
+      </div>
+      <div class="panel-body">
+        <div id="toolbar-indicators">
+          <select class="form-control">
+            <option value="">Export Basic</option>
+            <option value="all">Export All</option>
+            <option value="selected">Export Selected</option>
+          </select>
+          <div id="button-toolbar-indicators">
+            <button id="delete-row" class="btn btn-danger" disabled><i class="pli-cross"></i> Delete</button>
+          </div>
+        </div>
+        <table id="table-indicators" class="add-niftycheck table-inverse"
+           data-toolbar="#button-toolbar-indicators"
+           data-show-export="true"
+           data-search="true"
+           data-show-refresh="true"
+           data-show-toggle="true"
+           data-show-columns="true"
+           data-sort-name="id"
+           data-page-list="[5, 10, 20, 30, 50, 100]"
+           data-page-size="30"
+           data-pagination="true"
+           data-click-to-select="true"
+           data-show-pagination-switch="true">
+        </table>
+      </div>
+    </div>`
+
+  $("#aside-content").html(table);
+
+  if ("{{arg}}" == "campaign"){
+    data = get_neo4j_json_for_table(arg);
+    output = '<thead><tr><th data-field="state" data-checkbox="true">ID</th>'
+    for (row in data[0]){
+      output += '<th data-field="'+row+'" data-sortable="true">'+row+'</th>'
+    }
+    output += '</tr></thead>'
+    $('#table-indicators').html(output)
+
+    $('#table-indicators').bootstrapTable('destroy');
+    $('#table-indicators').bootstrapTable({ data: data });
+
+    $('#toolbar-indicators').find('select').change(function () {
+      $('#table-indicators').bootstrapTable('refreshOptions', {
+        exportDataType: $(this).val()
+      });
+    });
+  }
+}, 500);
 
 
-//-- #################################################################### -->
-//--  Beginning of the graph page  -->
-//-- #################################################################### -->
-function beginning_graph_page(){
-  sigma_json_parser(false);
-  all_types = get_all_nodes_types(false);
-  setTimeout( function timer(){
-    write_all_digos_in_aside();
-  }, 500);
-}
-
-beginning_graph_page()
 
 
 
@@ -439,7 +490,7 @@ beginning_graph_page()
 //--  Refresh function  -->
 //-- #################################################################### -->
 function refresh_graph(time){
-  write_all_digos_in_aside(false);
+  all_digos = get_all_digos();
   all_types = get_all_nodes_types(false);
   loading_gif(time);
   sigma_json_parser(false);
@@ -465,6 +516,30 @@ $(document).on('click', '#delete_node', function() {
         if(result) {
           id = $("#delete_node").val();
           delete_node(id);
+          refresh_graph(500);
+        }
+    }
+  });
+});
+
+
+
+//-- #################################################################### -->
+//--  Delete relationship -->
+//-- #################################################################### -->
+$(document).on('click', '#delete_relationship', function() {
+  BootstrapDialog.confirm({
+    title: 'WARNING',
+    message: 'Are you sure you want to delete the relationship ?',
+    type: BootstrapDialog.TYPE_DANGER,
+    closable: true,
+    draggable: true,
+    btnCancelLabel: 'Cancel!',
+    btnOKLabel: 'Delete!',
+    btnOKClass: 'btn-warning',
+    callback: function(result) {
+        if(result) {
+          delete_relationship(edge_selected.id);
           refresh_graph(500);
         }
     }
@@ -865,10 +940,6 @@ var zoomIn = function() {
       { duration: 300 }
     );
 };
-var zoomCenter = function() {
-  var loc = sigma.plugins.locate(s);
-  loc.center(1);
-};
 
 $(document).ready(function() {
   $('#zoomIn').on('click',function(e) {
@@ -878,10 +949,6 @@ $(document).ready(function() {
   $('#zoomOut').on('click',function(e) {
     e.preventDefault();
     zoomOut();
-  });
-  $('#zoomReset').on('click',function(e) {
-    e.preventDefault();
-    zoomCenter();
   });
 });
 
@@ -1113,6 +1180,9 @@ $(document).ready(function() {
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+
+
+
 
 
 

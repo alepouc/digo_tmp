@@ -49,7 +49,6 @@ def convertNeo4jJsonToSigma(neo4jJson):
                     "nodes": nodes,
                     "edges" : edges }
 
-
         for item in SigmaJSON["nodes"]:
             item['x'] = random.random()
             item['y'] = random.random()
@@ -90,8 +89,8 @@ def convertNeo4jJsonToTable(neo4jJson):
                                 tmp['value'] = d[k][key]
                             else:
                                 tmp[key] = d[k][key]
-                data.append(tmp)
-
+                if tmp not in data:
+                    data.append(tmp)
     return jsonify(data)
 
 
@@ -100,11 +99,18 @@ def convertNeo4jJsonToTable(neo4jJson):
 #########################################
 @app.route("/get_neo4j_json_for_graph")
 def get_neo4j_json_for_graph():
-    if request.args.get("campaign"):
-        campaign = request.args.get("campaign")
+    arg = ""
+    if request.args.getlist('campaign'):
+        campaigns = request.args.getlist('campaign')
+        for i in range(0, len(campaigns)):
+            if i == (len(campaigns)-1):
+                arg += 'n.campaign="'+campaigns[i]+'"'
+            else:
+                arg += 'n.campaign="'+campaigns[i]+'" OR '
+        query = 'MATCH (n) WHERE '+arg+'  OPTIONAL MATCH (n)-[r]-() RETURN n, r'
+    else:
+        query = 'MATCH (n) OPTIONAL MATCH (n)-[r]-() RETURN n, r LIMIT 50'
 
-    query = 'MATCH (n) OPTIONAL MATCH (n)-[r]-() WHERE n.campaign="'+campaign+'" return n,r'
-    print(query)
     results = gdb.query(query, data_contents=True)
     SigmaJSON = convertNeo4jJsonToSigma(results.graph)
     return SigmaJSON
@@ -115,10 +121,22 @@ def get_neo4j_json_for_graph():
 #########################################
 @app.route("/get_neo4j_json_for_table")
 def get_neo4j_json_for_table():
-    query = 'MATCH (n) RETURN n'
+    arg = ""
+    if request.args.getlist('campaign'):
+        campaigns = request.args.getlist('campaign')
+        for i in range(0, len(campaigns)):
+            if i == (len(campaigns)-1):
+                arg += 'n.campaign="'+campaigns[i]+'"'
+            else:
+                arg += 'n.campaign="'+campaigns[i]+'" OR '
+        query = 'MATCH (n) WHERE '+arg+'  OPTIONAL MATCH (n)-[r]-() RETURN n, r'
+    else:
+        query = 'MATCH (n) OPTIONAL MATCH (n)-[r]-() RETURN n, r LIMIT 50'
+
     results = gdb.query(query, data_contents=True)
     tableJSON = convertNeo4jJsonToTable(results.graph)
     return tableJSON
+
 
 
 
@@ -312,6 +330,19 @@ def delete_node():
     return "Node delete"
 
 
+
+# Delete relationship
+#########################################
+@app.route('/delete_relationship', methods=['POST'])
+def delete_relationship():
+    Id = request.form["id"]
+    query = 'start r=rel('+Id+') delete r;'
+    n = gdb.query(query)
+    return "Relationship delete"
+
+
+
+
 # Edit node
 #########################################
 @app.route('/edit_node', methods=['POST'])
@@ -370,27 +401,13 @@ def get_home_page():
 
 # Get campaigns page
 #########################################
-@app.route('/dashboard.html')
+@app.route('/dashboard')
 def get_campaigns_page():
-    return render_template("dashboard.html")
-
-# Get graph page
-#########################################
-@app.route('/graph.html')
-def get_graph_page():
-    return render_template("graph.html")
-
-
-# Get indicators page
-#########################################
-@app.route('/indicators.html')
-def get_indicators_page():
-    number_of_indicator_by_type = get_number_of_indicator_by_type()
-    if number_of_indicator_by_type:
-        return render_template("indicators.html", number_of_indicator_by_type=number_of_indicator_by_type)
+    campaign = request.args.getlist('campaign')
+    if campaign:
+        return render_template("graph.html", arg="campaign", campaign=campaign)
     else:
-        return render_template("empty.html")
-
+        return render_template("dashboard.html")
 
 
 

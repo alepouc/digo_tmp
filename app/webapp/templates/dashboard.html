@@ -73,10 +73,13 @@ $(function () {
   $("#show-graph").click(function () {
     var numberOfSelections = $('#table-campaign').bootstrapTable('getSelections').length;
     var selections = $('#table-campaign').bootstrapTable('getSelections')
+    var parameters = "";
     for (var i = 0; i < numberOfSelections; i++){
-      var campaign = selections[i]['campaign']
-    }
-    window.location.assign("graph.html?campaign="+campaign)
+      parameters += "campaign="+selections[i]['campaign']+'&'
+      }
+    parameters = parameters.slice(0, -1);
+
+    window.location.assign("dashboard?"+parameters)
   });
 });
 
@@ -351,6 +354,10 @@ function click_on_show_indicators()
 </div>
 <!--===================================================-->
 <!--END CONTENT CONTAINER-->
+
+
+
+
 
 
 {% endblock content %}
