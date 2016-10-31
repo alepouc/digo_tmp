@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from datetime import datetime
-from flask import Flask, request, jsonify, render_template, Response
+from flask import Flask, request, redirect, jsonify, render_template, Response, abort, send_from_directory
 from neo4jrestclient.client import GraphDatabase
 import time
 import json
@@ -12,13 +12,18 @@ import random
 from collections import defaultdict
 from digos import *
 from collections import Counter
-from collections import OrderedDict
+from werkzeug import secure_filename
+import csv
+import io
 
 
 app = Flask(__name__)
 gdb = GraphDatabase("http://digo-db:7474/db/data", username="neo4j", password="debug")
 app.jinja_env.autoescape = False
 app.config["JSON_SORT_KEYS"] = False
+ALLOWED_EXTENSIONS = set(['csv'])
+UPLOAD_FOLDER = '/upload_tmp'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 # Convert Neo4j JSON to Sigma JSON
@@ -314,7 +319,7 @@ def add_node():
         for row in results.rows:
             return "The node is already present in the database"
     else:
-        new_node = gdb.nodes.create(type=Value, confidence=Confidence, diamond_model= Diamond_model, campaign=Campaign, first_seen=FirstSeen, last_seen=LastSeen, tags=Tags, comments=Comments)
+        new_node = gdb.nodes.create(type=Value, confidence=Confidence, diamond_model=Diamond_model, campaign=Campaign, first_seen=FirstSeen, last_seen=LastSeen, tags=Tags, comments=Comments)
         new_node.labels.add(Type)
         return str(new_node.id)
 
@@ -434,6 +439,80 @@ def get_campaigns_page():
         return render_template("graph.html", arg="indicator", indicator=indicator)
     else:
         return render_template("dashboard.html")
+
+
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
+
+
+# Get upload page
+#########################################
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file():
+    names = []
+    if request.method == 'POST':
+        node_already_present = []
+        file = request.files['file']
+        if file.filename == '':
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+            csv_input = csv.reader(stream)
+            data = list(csv_input)
+            for row in range(0, len(data)):
+                output = {}
+                if row == 0:
+                    if 'type' not in data[row] or 'value' not in data[row]:
+                        return render_template("upload.html", message='The type field or value field has not been found !')
+                    else:
+                        names = data[row]
+                else:
+                    for column in range(0, len(data[row])):
+                        if names[column] == "type":
+                            Value = data[row][column]
+                        elif names[column] == "value":
+                            output['type'] = data[row][column]
+                        else:
+                            output[names[column]] = data[row][column]
+
+                    if 'confidence' not in data[row]:
+                        output['confidence'] = 'NULL'
+                    if 'diamondmodel' not in data[row]:
+                        output['diamondmodel'] = 'NULL'
+                    if 'campaign' not in data[row]:
+                        output['campaign'] = 'NULL'
+                    if 'firstseen' not in data[row]:
+                        output['firstseen'] = 'NULL'
+                    if 'lastseen' not in data[row]:
+                        output['lastseen'] = 'NULL'
+                    if 'tags' not in data[row]:
+                        output['tags'] = 'NULL'
+                    if 'comments' not in data[row]:
+                        output['comments'] = 'NULL'
+
+                    query = 'START n=node(*) WHERE n.type = "'+output['type']+'" return n'
+                    results = gdb.query(query, data_contents=True)
+
+                    if results:
+                        node_already_present.append(output['type'])
+                    else:
+                        new_node = gdb.nodes.create(**output)
+                        new_node.labels.add(Value)
+
+        if len(node_already_present) > 0:
+            return render_template("upload.html", message='Some node(s) already exist in the database', node_already_present=node_already_present)
+        else:
+            return render_template("upload.html", message='success')
+    else:
+        return render_template("upload.html")
+
+
+
 
 
 

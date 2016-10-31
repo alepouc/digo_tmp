@@ -1,0 +1,118 @@
+{% extends "index.html" %}
+{% block content %}
+
+
+<!--Generic Javascript Function [ OPTIONAL ]-->
+<script src="/static/assets/js/generic_js.js"></script>
+
+
+
+
+
+<!-- #################################################################### -->
+<!-- HTML  -->
+<!-- #################################################################### -->
+
+<!--CONTENT CONTAINER-->
+<!--===================================================-->
+<div id="content-container">
+
+  <!--Page Title-->
+  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+  <div id="page-title">
+    <h1 class="page-header text-overflow">Upload</h1>
+  </div>
+
+  <!--Page content-->
+  <!--===================================================-->
+  <div id="page-content">
+
+    <div class="panel">
+        <div class="panel-heading">
+            <h3 class="panel-title">Upload Indicators</h3>
+        </div>
+        <div class="panel-body">
+            <p>Upload several indicators or campaigns in one shot</p>
+
+            <br>
+
+            <form action="upload" method="post" enctype="multipart/form-data">
+             <input type="file" name="file"><br /><br />
+             <input type="submit" value="Upload">
+
+        </div>
+    </div>
+
+
+
+  </div>
+  <!--===================================================-->
+  <!--End page content-->
+
+
+</div>
+<!--===================================================-->
+<!--END CONTENT CONTAINER-->
+
+
+
+
+
+
+<script>
+{% if message == 'success' %}
+$.niftyNoty({
+    type: "success",
+    container : "floating",
+    title : "Success",
+    message : "Your indicators have been pushed into the database",
+    closeBtn : false,
+    timer : 5000
+});
+{% endif %}
+
+{% if message == 'The type field or value field has not been found !' %}
+$.niftyNoty({
+    type: 'danger',
+    icon : 'fa fa-bolt fa-2x',
+    container : 'page',
+    title : 'Error',
+    message : 'The type field or value field has not been found !'
+});
+{% endif %}
+
+
+{% if message == 'Some node(s) already exist in the database' %}
+  output = ""
+  {% for row in node_already_present %}
+    output += '- {{row}} </br>'
+  {% endfor %}
+
+  $.niftyNoty({
+      type: 'warning',
+      icon : 'fa fa-bolt fa-2x',
+      container : 'page',
+      title : 'Warning',
+      message : `Some node(s) already exist in the database </br>`+output
+  });
+{% endif %}
+
+
+
+
+
+
+
+
+
+</script>
+
+
+
+
+
+
+
+
+
+{% endblock content %}

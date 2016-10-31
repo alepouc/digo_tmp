@@ -2,13 +2,13 @@
 // --- Variables
 // ------------------------------------------------
 var colors_nodes = {
+  "hash": "#FFD86E",
   "ipv4":"#FF756E",
   "ipv6":"#DE9BF9",
-  "domain": "#68BDF6",
   "email": "#6DCE9E",
-  "hash": "#FFD86E",
-  "country": "#FF756E",
-  "entity": "#FB95AF",
+  "domain": "#FB95AF",
+  "country": "#A5ABB6",
+  "entity": "#68BDF6",
   "threat_actor": "#A5ABB6"
 };
 

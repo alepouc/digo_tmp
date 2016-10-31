@@ -874,7 +874,7 @@ $(document).on('click', '#edit_node', function() {
         <input type=text class="form-control modal-form-input" name="key_`+count_result_edit+`" value="value" readonly></input>
       </div>
       <div class="col-md-6">
-        <input type=text class="form-control modal-form-input" name="value_`+count_result_edit+`" value="`+node_selected.label+`" pattern="^[-a-zA-Z0-9_,\.@\s]*$" data-bv-regexp-message="The value cannot contain special character"></input>
+        <input type=text class="form-control modal-form-input" name="value_`+count_result_edit+`" value="`+node_selected.label+`" pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character"></input>
       </div>
     </div>`;
   count_result_edit += 1;
@@ -888,7 +888,7 @@ $(document).on('click', '#edit_node', function() {
           </div>
           <div class="col-md-6">
             <div class="dropdown">
-              <input class="form-control modal-form-input" name="value_`+count_result_edit+`" value="`+node_selected.properties[row]+`" type="search" list="types" pattern="^[-a-zA-Z0-9_,\.@\s]*$" data-bv-regexp-message="The value cannot contain special character">
+              <input class="form-control modal-form-input" name="value_`+count_result_edit+`" value="`+node_selected.properties[row]+`" type="search" list="types" pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character">
               <datalist id="types"></datalist>
             </div>
           </div>
@@ -901,7 +901,7 @@ $(document).on('click', '#edit_node', function() {
           </div>
           <div class="col-md-6">
             <div class="dropdown">
-              <input class="form-control modal-form-input" name="value_`+count_result_edit+`" value="`+node_selected.properties[row]+`" type="search" list="campaigns" pattern="^[-a-zA-Z0-9_,\.@\s]*$" data-bv-regexp-message="The value cannot contain special character">
+              <input class="form-control modal-form-input" name="value_`+count_result_edit+`" value="`+node_selected.properties[row]+`" type="search" list="campaigns" pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character">
               <datalist id="campaigns"></datalist>
             </div>
           </div>
@@ -946,7 +946,7 @@ $(document).on('click', '#edit_node', function() {
             <input type=text class="form-control modal-form-input" name="key_`+count_result_edit+`" value=`+row+` pattern="^[a-zA-Z][a-zA-Z0-9_-]*$" data-bv-regexp-message="The key cannot start with a number of special character"></input>
           </div>
           <div class="col-md-6">
-            <input type=text class="form-control modal-form-input" name="value_`+count_result_edit+`" value="`+node_selected.properties[row]+`" pattern="^[-a-zA-Z0-9_,\.@\s]*$" data-bv-regexp-message="The key cannot start with a number of special character"></input>
+            <input type=text class="form-control modal-form-input" name="value_`+count_result_edit+`" value="`+node_selected.properties[row]+`" pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The key cannot start with a number of special character"></input>
           </div>
         </div>`;
     }
@@ -1002,7 +1002,7 @@ $(document).on('click', '#edit_node', function() {
           }
           array[key] = value;
         }
-      
+
         ajaxMaskUI({
           url: "edit_node",
           type: "POST",
@@ -1069,9 +1069,10 @@ $(document).on('click', '#link-actions', function() {
             <input type=text class="form-control modal-form-input" id="key-modal" name="node_key_`+row+`" value="`+data[row][0]+`" pattern="^[a-zA-Z][a-zA-Z0-9_-]*$" data-bv-regexp-message="The key cannot start with a number of special character"></input>
           </div>
           <div class="col-md-5">
-            <input type=text class="form-control modal-form-input" id="value-modal" name="node_value_`+row+`" value="`+data[row][1]+`" pattern="^[-a-zA-Z0-9_,\.@\s]*$" data-bv-regexp-message="The value cannot contain special character"></input>
+            <input type=text class="form-control modal-form-input" id="value-modal" name="node_value_`+row+`" value="`+data[row][1]+`" pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character"></input>
           </div>
         </div>`;
+        count_result_action += 1;
     }
     output += `
       <div class="form-group">
@@ -1213,7 +1214,7 @@ $(document).ready(function() {
             <div class="col-md-12">
               <label class="modal-form-label">Type (required)</label></br>
               <div class="dropdown">
-                <input class="form-control modal-form-input" name="type" type="search" id="inputtype" list="types" placeholder="Pick a type ..." >
+                <input class="form-control modal-form-input" name="type" type="search" id="inputtype" list="types" placeholder="Pick a type ..." pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character">
                 <datalist id="types"></datalist>
               </div>
             </div>
@@ -1221,7 +1222,7 @@ $(document).ready(function() {
           <div class="form-group">
             <div class="col-md-12">
               <label class="modal-form-label">Value (required)</label>
-              <input class="form-control modal-form-input" name="value" type=text  id="inputvalue" placeholder="8.8.8.8, or toto.com ..." />
+              <input class="form-control modal-form-input" name="value" type=text  id="inputvalue" placeholder="8.8.8.8, or toto.com ..." pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character" />
             </div>
           </div>
           <div class="form-group">
@@ -1251,7 +1252,7 @@ $(document).ready(function() {
             <div class="col-md-12">
               <label class="modal-form-label">Campaign/Investigation (optional)</label></br>
               <div class="dropdown">
-                <input class="form-control modal-form-input" name="campaign" type="search" id="inputcampaign" list="campaigns" placeholder="Pick a campaign ..." >
+                <input class="form-control modal-form-input" name="campaign" type="search" id="inputcampaign" list="campaigns" placeholder="Pick a campaign ..." pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character" >
                 <datalist id="campaigns"></datalist>
               </div>
             </div>
@@ -1259,25 +1260,25 @@ $(document).ready(function() {
           <div class="form-group">
             <div class="col-md-12">
               <label class="modal-form-label">First Seen (optional)</label>
-              <input type=text class="form-control modal-form-input" name="firstseen" id="inputfirstseen" placeholder="15/10/2016"></input>
+              <input type=text class="form-control modal-form-input" name="firstseen" id="inputfirstseen" placeholder="15/10/2016" pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character"></input>
             </div>
           </div>
           <div class="form-group">
             <div class="col-md-12">
               <label class="modal-form-label">Last Seen (optional)</label>
-              <input type=text class="form-control modal-form-input" name="lastseen" id="inputlastseen" placeholder="15/10/2016"></input>
+              <input type=text class="form-control modal-form-input" name="lastseen" id="inputlastseen" placeholder="15/10/2016" pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character"></input>
             </div>
           </div>
           <div class="form-group">
             <div class="col-md-12">
               <label class="modal-form-label">Tags (optional)</label>
-              <input type=text class="form-control modal-form-input" name="tags" id="inputtags" placeholder="ransomware, phishing, etc."></input>
+              <input type=text class="form-control modal-form-input" name="tags" id="inputtags" placeholder="ransomware, phishing, etc." pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character"></input>
             </div>
           </div>
           <div class="form-group">
             <div class="col-md-12">
               <label class="modal-form-label">Comments (optional)</label>
-              <textarea class="form-control modal-form-input" name="comments" id="inputcomments" row="4" placeholder="Up to you :P"></textarea>
+              <textarea class="form-control modal-form-input" name="comments" id="inputcomments" row="4" placeholder="Up to you :P" pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character"></textarea>
             </div>
           </div>
           <div class="form-group">
