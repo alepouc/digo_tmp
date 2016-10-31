@@ -49,6 +49,66 @@ ajax_function = function(uri, method, data, async_value) {
 }
 
 
+function ajaxMaskUI(settings) {
+
+    function maskPageOn(color) { // color can be ie. 'rgba(176,176,176,0.7)' or 'transparent'
+        var div = $('#maskPageDiv');
+        if (div.length === 0) {
+            $(document.body).append('<div id="maskPageDiv" style="position:fixed;width:100%;height:100%;left:0;top:0;display:none"></div>'); // create it
+            div = $('#maskPageDiv');
+        }
+        if (div.length !== 0) {
+            div[0].style.zIndex = 2147483647;
+            div[0].style.backgroundColor=color;
+            div[0].style.display = 'inline';
+        }
+    }
+
+    function maskPageOff() {
+        var div = $('#maskPageDiv');
+        if (div.length !== 0) {
+            div[0].style.display = 'none';
+            div[0].style.zIndex = 'auto';
+        }
+    }
+
+    function hourglassOn() {
+        if ($('style:contains("html.hourGlass")').length < 1) $('<style>').text('html.hourGlass, html.hourGlass * { cursor: wait !important; }').appendTo('head');
+        $('html').addClass('hourGlass');
+    }
+
+    function hourglassOff() {
+        $('html').removeClass('hourGlass');
+    }
+
+    if (settings.maskUI===true) settings.maskUI='transparent';
+
+    if (!!settings.maskUI) {
+        maskPageOn(settings.maskUI);
+        hourglassOn();
+    }
+
+    var dfd = new $.Deferred();
+    $.ajax(settings)
+        .fail(function(jqXHR, textStatus, errorThrown) {
+            if (!!settings.maskUI) {
+                maskPageOff();
+                hourglassOff();
+            }
+            dfd.reject(jqXHR, textStatus, errorThrown);
+        }).done(function(data, textStatus, jqXHR) {
+            if (!!settings.maskUI) {
+                maskPageOff();
+                hourglassOff();
+            }
+            dfd.resolve(data, textStatus, jqXHR);
+        });
+
+    return dfd.promise();
+}
+
+
+
 // ------------------------------------------------
 // --- Remove dupplicate from array
 // ------------------------------------------------
@@ -57,123 +117,6 @@ function uniq(a) {
         return !pos || item != ary[pos - 1];
     })
 }
-
-
-// ------------------------------------------------
-// --- Loading gif when a page is loading
-// ------------------------------------------------
-function loading_gif(time){
-  $body.addClass("loading");;
-  setTimeout(function(){
-      $body.removeClass("loading");
-  }, time);
-}
-
-
-// ------------------------------------------------
-// --- Get the whole list of actions available
-// ------------------------------------------------
-function get_all_digos(){
-  ajax_function("get_all_digos","GET", false, false).done(function(json) {
-   all_actions = json;
- });
- return all_actions;
-}
-
-
-
-// ------------------------------------------------
-//--  Get digo result
-// ------------------------------------------------
-function get_digo_result(action, value){
-  ajax_function("get_digo_result","GET", "digo="+action+"&input="+value, false).done(function(json) {
-    data = json;
-  });
-  return data;
-}
-
-
-
-// ------------------------------------------------
-//--  Get the whole list of types
-// ------------------------------------------------
-function get_all_nodes_types(async){
-  ajax_function("get_all_nodes_types","GET", false, false).done(function(json) {
-   all_types = json
-  });
-  return all_types;
-}
-
-
-// ------------------------------------------------
-//--  Delete node
-// ------------------------------------------------
-function delete_node(id){
-  ajax_function("delete_node","POST", 'id='+id, false).complete(function(json) {
-    data = json;
-  });
-  return data;
-}
-
-
-
-// ------------------------------------------------
-//--  Delete relationship
-// ------------------------------------------------
-function delete_relationship(id){
-  ajax_function("delete_relationship","POST", 'id='+id, false).complete(function(json) {
-    data = json;
-  });
-  return data;
-}
-
-
-// ------------------------------------------------
-//--  Add node
-// ------------------------------------------------
-function add_node(valuesToSubmit){
-  ajax_function("add_node","POST", valuesToSubmit, false).complete(function(json) {
-    data = json;
-  });
-  return data;
-}
-
-
-// ------------------------------------------------
-//--  Add relationship
-// ------------------------------------------------
-function add_relationship(id1, id2){
-  ajax_function("add_relationship","POST", 'id1='+id1+'&id2='+id2, false).complete(function(json) {
-    data = json;
-  });
-  return data;
-}
-
-
-
-// ------------------------------------------------
-//--  Add property
-// ------------------------------------------------
-function add_property(id, propertykey, propertyvalue){
-  ajax_function("add_property","POST", 'id='+id+'&propertykey='+propertykey+'&propertyvalue='+propertyvalue, false).complete(function(json) {
-    data = json;
-  });
-  return data;
-}
-
-
-
-
-// ------------------------------------------------
-//--  Edit Node
-// ------------------------------------------------
-function edit_node(array){
-  ajax_function("edit_node","POST", array, false).complete(function(json) {
-    data = json;
-  });
-  return data;
-}
-
 
 
 

@@ -3,16 +3,21 @@
 import json
 import whois
 from ipwhois import IPWhois
+from pprint import pprint
+from collections import OrderedDict
 
 
 def getResult(ip):
-    output = {}
+    output = OrderedDict()
     obj = IPWhois(ip)
     result = obj.lookup_whois()
+
     for k, v in result.items():
 
         if "nets" not in k:
-            output["0-"+k] = v
+            output[k] = v
+
+    for k, v in result.items():
 
         if "nets" in k:
             if type(v) == list:
@@ -20,6 +25,5 @@ def getResult(ip):
                 for row in v:
                     count += 1
                     for k1, v1 in row.items():
-                        output[str(count)+"-"+k1] = v1
-
+                        output[k1+'-'+str(count)] = v1
     return output

@@ -22,8 +22,11 @@
 // ------------------------------------------------
 //--  Get campaigns JSON
 // ------------------------------------------------
-campaigns = get_all_campaigns();
-
+tmp = get_all_campaigns();
+var campaigns = []
+for (row in tmp){
+  campaigns.push({'campaign':row})
+}
 
 // ------------------------------------------------
 //--  Intilisation campaigns table
@@ -67,10 +70,10 @@ $(function () {
 
 
 // ------------------------------------------------
-//--  Actions when clicking on Show Graph
+//--  Actions when clicking on Campaign Show Graph
 // ------------------------------------------------
 $(function () {
-  $("#show-graph").click(function () {
+  $("#campaign-show-graph").click(function () {
     var numberOfSelections = $('#table-campaign').bootstrapTable('getSelections').length;
     var selections = $('#table-campaign').bootstrapTable('getSelections')
     var parameters = "";
@@ -83,6 +86,25 @@ $(function () {
   });
 });
 
+
+
+
+// ------------------------------------------------
+//--  Actions when clicking on Indicators Show Graph
+// ------------------------------------------------
+$(function () {
+  $("#indicators-show-graph").click(function () {
+    var numberOfSelections = $('#table-indicators').bootstrapTable('getSelections').length;
+    var selections = $('#table-indicators').bootstrapTable('getSelections')
+    var parameters = "";
+    for (var i = 0; i < numberOfSelections; i++){
+      parameters += "indicator="+selections[i]['id']+'&'
+      }
+    parameters = parameters.slice(0, -1);
+
+    window.location.assign("dashboard?"+parameters)
+  });
+});
 
 
 
@@ -251,7 +273,7 @@ function click_on_show_indicators()
             <div id="button-toolbar-campaign">
               <button id="delete-row" class="btn btn-danger" disabled><i class="pli-cross"></i> Delete</button>
               <button id="show-indicators" class="btn btn-default"><i class="pli-cross"></i> Show Indicators</button>
-              <button id="show-graph" class="btn btn-default"><i class="pli-cross"></i> Show Graph</button>
+              <button id="campaign-show-graph" class="btn btn-default"><i class="pli-cross"></i> Show Graph</button>
             </div>
           </div>
           <table id="table-campaign" class="add-niftycheck"
@@ -324,6 +346,7 @@ function click_on_show_indicators()
           </select>
           <div id="button-toolbar-indicators">
             <button id="delete-row" class="btn btn-danger" disabled><i class="pli-cross"></i> Delete</button>
+            <button id="indicators-show-graph" class="btn btn-default"><i class="pli-cross"></i> Show Graph</button>
           </div>
         </div>
         <table id="table-indicators" class="add-niftycheck"

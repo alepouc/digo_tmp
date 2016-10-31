@@ -12,12 +12,13 @@ import random
 from collections import defaultdict
 from digos import *
 from collections import Counter
-
+from collections import OrderedDict
 
 
 app = Flask(__name__)
 gdb = GraphDatabase("http://digo-db:7474/db/data", username="neo4j", password="debug")
 app.jinja_env.autoescape = False
+app.config["JSON_SORT_KEYS"] = False
 
 
 # Convert Neo4j JSON to Sigma JSON
@@ -99,8 +100,9 @@ def convertNeo4jJsonToTable(neo4jJson):
 #########################################
 @app.route("/get_neo4j_json_for_graph")
 def get_neo4j_json_for_graph():
-    arg = ""
+
     if request.args.getlist('campaign'):
+        arg = ""
         campaigns = request.args.getlist('campaign')
         for i in range(0, len(campaigns)):
             if i == (len(campaigns)-1):
@@ -108,6 +110,14 @@ def get_neo4j_json_for_graph():
             else:
                 arg += 'n.campaign="'+campaigns[i]+'" OR '
         query = 'MATCH (n) WHERE '+arg+'  OPTIONAL MATCH (n)-[r]-() RETURN n, r'
+
+    elif request.args.getlist('indicator'):
+        arg = []
+        indicators = request.args.getlist('indicator')
+        for i in range(0, len(indicators)):
+            arg.append(int(indicators[i]))
+        query = 'MATCH (n) WHERE ID(n) IN '+str(arg)+' OPTIONAL MATCH (n)-[r]-() RETURN n,r'
+
     else:
         query = 'MATCH (n) OPTIONAL MATCH (n)-[r]-() RETURN n, r LIMIT 50'
 
@@ -121,8 +131,8 @@ def get_neo4j_json_for_graph():
 #########################################
 @app.route("/get_neo4j_json_for_table")
 def get_neo4j_json_for_table():
-    arg = ""
     if request.args.getlist('campaign'):
+        arg = ""
         campaigns = request.args.getlist('campaign')
         for i in range(0, len(campaigns)):
             if i == (len(campaigns)-1):
@@ -130,6 +140,14 @@ def get_neo4j_json_for_table():
             else:
                 arg += 'n.campaign="'+campaigns[i]+'" OR '
         query = 'MATCH (n) WHERE '+arg+'  OPTIONAL MATCH (n)-[r]-() RETURN n, r'
+
+    if request.args.getlist('indicator'):
+        arg = []
+        indicators = request.args.getlist('indicator')
+        for i in range(0, len(indicators)):
+            arg.append(int(indicators[i]))
+        query = 'MATCH (n) WHERE ID(n) IN '+str(arg)+' OPTIONAL MATCH (n)-[r]-() RETURN n,r'
+
     else:
         query = 'MATCH (n) OPTIONAL MATCH (n)-[r]-() RETURN n, r LIMIT 50'
 
@@ -144,11 +162,11 @@ def get_neo4j_json_for_table():
 #########################################
 @app.route("/get_all_campaigns")
 def get_all_campaigns():
-    campaigns = []
+    campaigns = {}
     query = 'MATCH (n) return distinct n.campaign'
     results = gdb.query(query, data_contents=True)
     for row in results.rows:
-        campaigns.append({"campaign": row[0]})
+        campaigns[row[0]] = row[0]
     return jsonify(campaigns)
 
 
@@ -208,9 +226,7 @@ def get_digo_result():
     digos_import = __import__('digos')
     func = getattr(digos_import, digo)
     result = func.getResult(input)
-    output = {}
-    output["json_result"] = result
-    return jsonify(output)
+    return jsonify(list(result.items()))
 
 
 
@@ -291,9 +307,16 @@ def add_node():
     if Comments == "":
         Comments = "NULL"
 
-    new_node = gdb.nodes.create(type=Value, confidence=Confidence, diamond_model= Diamond_model, campaign=Campaign, first_seen=FirstSeen, last_seen=LastSeen, tags=Tags, comments=Comments)
-    new_node.labels.add(Type)
-    return str(new_node.id)
+    query = 'START n=node(*) WHERE n.type = "'+Value+'" return n'
+    results = gdb.query(query, data_contents=True)
+
+    if results:
+        for row in results.rows:
+            return "The node is already present in the database"
+    else:
+        new_node = gdb.nodes.create(type=Value, confidence=Confidence, diamond_model= Diamond_model, campaign=Campaign, first_seen=FirstSeen, last_seen=LastSeen, tags=Tags, comments=Comments)
+        new_node.labels.add(Type)
+        return str(new_node.id)
 
 
 
@@ -404,8 +427,11 @@ def get_home_page():
 @app.route('/dashboard')
 def get_campaigns_page():
     campaign = request.args.getlist('campaign')
+    indicator = request.args.getlist('indicator')
     if campaign:
         return render_template("graph.html", arg="campaign", campaign=campaign)
+    if indicator:
+        return render_template("graph.html", arg="indicator", indicator=indicator)
     else:
         return render_template("dashboard.html")
 
