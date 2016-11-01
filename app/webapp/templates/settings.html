@@ -1,0 +1,139 @@
+{% extends "index.html" %}
+{% block content %}
+
+
+<!-- #################################################################### -->
+<!-- HTML  -->
+<!-- #################################################################### -->
+
+<!--CONTENT CONTAINER-->
+<!--===================================================-->
+<div id="content-container">
+
+  <!--Page Title-->
+  <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+  <div id="page-title">
+    <h1 class="page-header text-overflow">Campaigns/Investigations</h1>
+  </div>
+
+  <!--Page content-->
+  <!--===================================================-->
+  <div id="page-content">
+
+
+    <!--First row-->
+    <!--===================================================-->
+    <div class="row">
+
+      <!-- Campaign Table ->
+      <!=================================================== -->
+      <div class="panel">
+        <div class="col-lg-5">
+            <div class="panel panel-trans">
+                <div class="panel-heading">
+                    <div class="panel-control">
+                        <a title="" data-html="true" data-container="body" data-original-title="&lt;p class='h4 text-semibold'&gt;Information&lt;/p&gt;&lt;p style='width:150px'&gt;This is an information bubble to help the user.&lt;/p&gt;" href="#" class="demo-psi-information icon-lg icon-fw unselectable text-info add-tooltip"></a>
+                    </div>
+                    <h3 class="panel-title">Services</h3>
+                </div>
+                <div class="bord-btm">
+                    <ul class="list-group bg-trans">
+                        <li class="list-group-item">
+                            <div class="pull-right">
+                                <input id="demo-online-status-checkbox" class="toggle-switch" type="checkbox" checked>
+                                <label for="demo-online-status-checkbox"></label>
+                            </div>
+                            Online status
+                        </li>
+                        <li class="list-group-item">
+                            <div class="pull-right">
+                                <input id="demo-show-off-contact-checkbox" class="toggle-switch" type="checkbox" checked>
+                                <label for="demo-show-off-contact-checkbox"></label>
+                            </div>
+                            Show offline contact
+                        </li>
+                        <li class="list-group-item">
+                            <div class="pull-right">
+                                <input id="demo-show-device-checkbox" class="toggle-switch" type="checkbox">
+                                <label for="demo-show-device-checkbox"></label>
+                            </div>
+                            Show my device icon
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="panel">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Input size</h3>
+                </div>
+
+
+                <!--Input Size-->
+                <!--===================================================-->
+                <form class="form-horizontal">
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label" for="demo-is-inputsmall">Small Input</label>
+                            <div class="col-sm-6">
+                                <input type="text" placeholder=".input-sm" class="form-control input-sm" id="demo-is-inputsmall">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="demo-is-inputnormal" class="col-sm-3 control-label">Normal Input</label>
+                            <div class="col-sm-6">
+                                <input type="text" placeholder="Normal" class="form-control" id="demo-is-inputnormal">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="demo-is-inputlarge" class="col-sm-3 control-label">Large Input</label>
+                            <div class="col-sm-6">
+                                <input type="text" placeholder=".input-lg" class="form-control input-lg" id="demo-is-inputlarge">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Grid Inputs</label>
+                            <div class="col-sm-3">
+                                <input type="text" placeholder=".col-sm-3" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-5 col-sm-offset-3">
+                                <input type="text" placeholder=".col-sm-5" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-7 col-sm-offset-3">
+                                <input type="text" placeholder=".col-sm-7" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-9 col-sm-offset-3">
+                                <input type="text" placeholder=".col-sm-9" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-footer">
+                        <div class="row">
+                            <div class="col-sm-9 col-sm-offset-3">
+                                <button class="btn btn-mint" type="submit">Login</button>
+                                <button class="btn btn-warning" type="reset">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <!--===================================================-->
+                <!--End Input Size-->
+
+
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+{% endblock content %}

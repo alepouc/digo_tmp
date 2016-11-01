@@ -25,6 +25,11 @@ ALLOWED_EXTENSIONS = set(['csv'])
 UPLOAD_FOLDER = '/upload_tmp'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+settings = {
+                'virustotal_api': '55ee5332492021897fbebb12f3768476374c9e84ef749ab19ce4865854d899fc'
+            }
+
+
 
 # Convert Neo4j JSON to Sigma JSON
 #########################################
@@ -513,7 +518,17 @@ def upload_file():
 
 
 
+@app.route('/settings', methods=['GET'])
+def settings():
+    try:
+        return render_template('settings.html', settings=settings)
+    except Exception as e:
+        return render_template('error.html', error=e)
 
+
+@app.route('/error', methods=['GET'])
+def error():
+    return render_template('error.html')
 
 
 if __name__ == "__main__":

@@ -1,0 +1,35 @@
+{% extends "index.html" %}
+{% block content %}
+
+
+<!--CONTENT CONTAINER-->
+<!--===================================================-->
+<div id="content-container">
+
+  <!--Page content-->
+  <!--===================================================-->
+  <div id="page-content">
+
+
+    <div id="container" class="cls-container">
+
+      <!-- CONTENT -->
+      <!--===================================================-->
+      <div class="cls-content">
+          <h1 class="error-code text-primary">Error</h1>
+          <p class="text-main text-semibold text-lg text-uppercase">Internal Server Error!</p>
+          <div class="pad-btm text-muted">
+              Something went wrong and server couldn't process your request.
+          </div>
+          <hr class="new-section-sm bord-no">
+          <div class="pad-top"><a class="btn-link" href="/">Back to Dashboard</a></div>
+      </div>
+
+
+    </div>
+    <!--===================================================-->
+    <!-- END OF CONTAINER -->
+  </div>
+</div>
+
+{% endblock content %}
