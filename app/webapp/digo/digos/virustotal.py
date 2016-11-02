@@ -53,7 +53,8 @@ class vt:
             print('generic exception: ' + traceback.format_exc())
 
 
-
+def returnType():
+    return ['hash']
 
 #vt = vt()
 #result = vt.getfile('e6ff1bf0821f00384cdd25efb9b1cc09')

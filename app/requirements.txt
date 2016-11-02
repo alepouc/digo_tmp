@@ -1,6 +1,9 @@
-uwsgi
 Flask
+Flask-WTF
+flask-login
 neo4jrestclient
 ipwhois
 python-whois
 requests
+passlib
+bcrypt

@@ -63,7 +63,7 @@
 <!-- #################################################################### -->
 <script>
 var all_types;
-var all_digos;
+var all_digos = {{ digos }};
 var all_nodes;
 var all_campaigns;
 var campaigns_selected = [];
@@ -465,19 +465,6 @@ function refresh_graph(){
 
   }).done(function (data, textStatus, jqXHR) {
     all_campaigns = data;
-  });
-
-
-  ajaxMaskUI({
-    url: "get_all_digos",
-    type: "GET",
-    maskUI: 'rgba(176,176,176,0.7)'
-
-  }).fail(function (jqXHR, textStatus, errorThrown) {
-    console.log('error ' + textStatus);
-
-  }).done(function (data, textStatus, jqXHR) {
-    all_digos = data;
   });
 
   sigma_json_parser(false);
@@ -1029,12 +1016,13 @@ $(document).on('click', '#edit_node', function() {
 $(document).on('click', '#link-actions', function() {
   $("#receive_action_form").bootstrapValidator("destroy");
   var count_result_action = 0;
-  action = $("#link-actions").text();
+  digo = $("#link-actions").text();
   value = node_selected.label;
+  type = node_selected.properties.type;
   ajaxMaskUI({
     url: "get_digo_result",
     type: "GET",
-    data: "digo="+action+"&input="+value,
+    data: "type="+node_selected.properties.type+"&value="+value+"&digo="+digo,
     maskUI: 'rgba(176,176,176,0.7)'
 
   }).fail(function (jqXHR, textStatus, errorThrown) {

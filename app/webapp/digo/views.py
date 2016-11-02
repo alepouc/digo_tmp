@@ -1,114 +1,75 @@
 #!/usr/bin/env python
 
 from datetime import datetime
-from flask import Flask, request, redirect, jsonify, render_template, Response, abort, send_from_directory
-from neo4jrestclient.client import GraphDatabase
+from flask import Flask, request, redirect, jsonify, render_template, Response, abort, send_from_directory, url_for, session, flash
+from flask_login import current_user, LoginManager, UserMixin, login_required, login_user, logout_user
 import time
 import json
-from pprint import pprint
 from glob import glob
 import os
-import random
 from collections import defaultdict
-from digos import *
 from collections import Counter
 from werkzeug import secure_filename
 import csv
 import io
 
 
+from .models import *
+
 app = Flask(__name__)
-gdb = GraphDatabase("http://digo-db:7474/db/data", username="neo4j", password="debug")
-app.jinja_env.autoescape = False
-app.config["JSON_SORT_KEYS"] = False
-ALLOWED_EXTENSIONS = set(['csv'])
-UPLOAD_FOLDER = '/upload_tmp'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-settings = {
-                'virustotal_api': '55ee5332492021897fbebb12f3768476374c9e84ef749ab19ce4865854d899fc'
-            }
 
 
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
 
-# Convert Neo4j JSON to Sigma JSON
-#########################################
-def convertNeo4jJsonToSigma(neo4jJson):
-    nodes_j = []
-    edges_j = []
-    if neo4jJson:
-        for row in neo4jJson:
-            if str(row['relationships']) != "[]":
-                edges_j.extend(row['relationships'])
-            nodes_j.extend(row['nodes'])
-
-        nodes_j = {"nodes": nodes_j}
-        edges_j = {"edges": edges_j}
-
-        nodes = []
-        for item in nodes_j['nodes']:
-            if item not in nodes:
-                nodes.append(item)
+@login_manager.user_loader
+def load_user(username):
+    return User(username)
 
 
-        edges = []
-        for item in edges_j['edges']:
-            if item not in edges:
-                edges.append(item)
-
-        SigmaJSON = {
-                    "nodes": nodes,
-                    "edges" : edges }
-
-        for item in SigmaJSON["nodes"]:
-            item['x'] = random.random()
-            item['y'] = random.random()
-            item['label'] = item.pop("labels")
-            Properties = item['properties']
-            Label = item['label']
-            item['label'] = Properties['type']
-            item['properties']['type'] = Label[0]
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegistrationForm(request.form)
+    if request.method == 'POST' and form.validate():
+        user = User(form.username.data)
+        if user.find():
+            flash('A user with this username already exists.', 'error')
+        else:
+            user.register(form.email.data, form.password.data)
+            login_user(user)
+            if current_user.is_authenticated:
+                flash('Logged in.', 'success')
+                return redirect(url_for('get_home_page'))
+    return render_template('register.html', form=form)
 
 
-        for item in SigmaJSON["edges"]:
-            item['source'] = item.pop("startNode")
-            item['target'] = item.pop("endNode")
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm(request.form)
+    if request.method == 'POST' and form.validate():
+        user = User(form.username.data)
+        if not user.verify_password(form.password.data):
+            flash('Invalid login.', 'error')
+        else:
+            login_user(user)
+            if current_user.is_authenticated:
+                flash('Logged in.', 'success')
+                return redirect(url_for('get_home_page'))
+    return render_template('login.html', form=form)
 
-    else:
-        SigmaJSON = {"nodes": [], "edges": []}
-    return jsonify(SigmaJSON)
 
-
-
-
-# Convert Neo4j JSON to Json table
-#########################################
-def convertNeo4jJsonToTable(neo4jJson):
-    data = []
-    if neo4jJson:
-        for row in neo4jJson:
-            for d in row['nodes']:
-                tmp = {}
-                for k in d:
-                    if k == 'id':
-                         tmp['id'] = d[k]
-                    if k == 'labels':
-                        tmp['type'] = d[k][0]
-                    if k == 'properties':
-                        for key in d[k]:
-                            if key == 'type':
-                                tmp['value'] = d[k][key]
-                            else:
-                                tmp[key] = d[k][key]
-                if tmp not in data:
-                    data.append(tmp)
-    return jsonify(data)
-
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
 
 
 # Get neo4j JSON for graph
 #########################################
 @app.route("/get_neo4j_json_for_graph")
+@login_required
 def get_neo4j_json_for_graph():
 
     if request.args.getlist('campaign'):
@@ -133,13 +94,14 @@ def get_neo4j_json_for_graph():
 
     results = gdb.query(query, data_contents=True)
     SigmaJSON = convertNeo4jJsonToSigma(results.graph)
-    return SigmaJSON
+    return jsonify(SigmaJSON)
 
 
 
 # Get neo4j JSON for table
 #########################################
 @app.route("/get_neo4j_json_for_table")
+@login_required
 def get_neo4j_json_for_table():
     if request.args.getlist('campaign'):
         arg = ""
@@ -163,7 +125,7 @@ def get_neo4j_json_for_table():
 
     results = gdb.query(query, data_contents=True)
     tableJSON = convertNeo4jJsonToTable(results.graph)
-    return tableJSON
+    return jsonify(tableJSON)
 
 
 
@@ -171,6 +133,7 @@ def get_neo4j_json_for_table():
 # Get all campaigns
 #########################################
 @app.route("/get_all_campaigns")
+@login_required
 def get_all_campaigns():
     campaigns = {}
     query = 'MATCH (n) return distinct n.campaign'
@@ -184,12 +147,13 @@ def get_all_campaigns():
 # Get indicators for specific campaign for table view
 #########################################
 @app.route("/get_indicators_specific_campaign_for_table_view", methods=['GET'])
+@login_required
 def get_indicators_specific_campaign_for_table_view():
     campaign = request.args.get("campaign")
     query = 'MATCH (n) WHERE n.campaign="'+campaign+'" return n'
     results = gdb.query(query, data_contents=True)
     tableJSON = convertNeo4jJsonToTable(results.graph)
-    return tableJSON
+    return jsonify(tableJSON)
 
 
 
@@ -197,6 +161,7 @@ def get_indicators_specific_campaign_for_table_view():
 # Get number of indicator by node type for specific campaign
 #########################################
 @app.route("/get_number_of_indicator_by_node_type_for_specific_campaign")
+@login_required
 def get_number_of_indicator_by_node_type_for_specific_campaign():
     campaign = request.args.get("campaign")
     output = []
@@ -215,27 +180,39 @@ def get_number_of_indicator_by_node_type_for_specific_campaign():
 # Get all digos
 #########################################
 @app.route('/get_all_digos')
+@login_required
 def get_all_digos():
-    files = glob('digos/*')
-    result_json = defaultdict(list)
+    files = glob('digo/digos/*')
+    digos = {}
     for row in files:
         if ".py" in row:
             if "__init__.py" not in row:
-                action_type = row.split("_")[0].split("/")[1]
-                action = row.split("/")[1].split(".")[0]
-                result_json[action_type].append(action)
-    return jsonify(result_json)
+                digo = row.split("/")[2].split(".")[0]
+                digos_import = __import__('digos', globals(), locals(), [], 1)
+                func = getattr(digos_import, digo)
+                returnType = func.returnType()
+                for type in returnType:
+                    digos.setdefault(type, []).append(digo)
+
+    return digos
+
 
 
 # Get digo result
 #########################################
 @app.route('/get_digo_result')
+@login_required
 def get_digo_result():
     digo = request.args.get('digo')
-    input = request.args.get('input')
-    digos_import = __import__('digos')
+    value = request.args.get('value')
+    type = request.args.get('type')
+
+    conf['type'] = type
+    conf['value'] = value
+
+    digos_import = __import__('digos', globals(), locals(), [], 1)
     func = getattr(digos_import, digo)
-    result = func.getResult(input)
+    result = func.getResult(conf)
     return jsonify(list(result.items()))
 
 
@@ -243,6 +220,7 @@ def get_digo_result():
 # Get all nodes types
 #########################################
 @app.route("/get_all_nodes_types")
+@login_required
 def get_all_nodes_types():
     Type = {
             "ipv4": "ipv4",
@@ -269,6 +247,7 @@ def get_all_nodes_types():
 # Get number of indicator by node type
 #########################################
 @app.route("/get_number_of_indicator_by_node_type")
+@login_required
 def get_number_of_indicator_by_node_type():
     output = []
     query = 'START n=node(*) RETURN labels(n)'
@@ -285,6 +264,7 @@ def get_number_of_indicator_by_node_type():
 # Add node
 #########################################
 @app.route('/add_node', methods=['POST'])
+@login_required
 def add_node():
     Type = request.form["type"]
     Value = request.form["value"]
@@ -333,6 +313,7 @@ def add_node():
 # Add property
 #########################################
 @app.route('/add_property', methods=['POST'])
+@login_required
 def add_node_properties():
     Id = request.form['id']
     Property_key = request.form['propertykey']
@@ -345,6 +326,7 @@ def add_node_properties():
 # Add relationship
 #########################################
 @app.route('/add_relationship', methods=['POST'])
+@login_required
 def add_relationship():
     id1 = request.form["id1"]
     id2 = request.form["id2"]
@@ -356,6 +338,7 @@ def add_relationship():
 # Delete node
 #########################################
 @app.route('/delete_node', methods=['POST'])
+@login_required
 def delete_node():
     Id = request.form["id"]
     query = 'START n=node('+Id+') OPTIONAL MATCH (n)-[r]-() DELETE n,r'
@@ -367,6 +350,7 @@ def delete_node():
 # Delete relationship
 #########################################
 @app.route('/delete_relationship', methods=['POST'])
+@login_required
 def delete_relationship():
     Id = request.form["id"]
     query = 'start r=rel('+Id+') delete r;'
@@ -379,6 +363,7 @@ def delete_relationship():
 # Edit node
 #########################################
 @app.route('/edit_node', methods=['POST'])
+@login_required
 def edit_node():
     data = request.form
     Id = data['id']
@@ -425,38 +410,58 @@ def edit_node():
 
 
 
+
+@app.route('/settings', methods=['GET'])
+@login_required
+def settings():
+    try:
+        return render_template('settings.html', settings=settings)
+    except Exception as e:
+        return render_template('error.html', error=e)
+
+
+
 # Get home page
 #########################################
-@app.route('/')
+@app.route('/', methods=['GET'])
+@login_required
 def get_home_page():
     return render_template("dashboard.html")
 
 
 # Get campaigns page
 #########################################
-@app.route('/dashboard')
-def get_campaigns_page():
+@app.route('/dashboard', methods=['GET'])
+@login_required
+def get_dashboard():
+    return render_template("dashboard.html")
+
+
+# Get campaigns page
+#########################################
+@app.route('/graph', methods=['GET'])
+@login_required
+def get_graph():
+
+    # Parameters
     campaign = request.args.getlist('campaign')
     indicator = request.args.getlist('indicator')
+
+    # Function executed by default
+    digos = get_all_digos()
+
     if campaign:
-        return render_template("graph.html", arg="campaign", campaign=campaign)
+        return render_template("graph.html", digos=digos, arg="campaign", campaign=campaign)
     if indicator:
-        return render_template("graph.html", arg="indicator", indicator=indicator)
+        return render_template("graph.html", digos=digos, arg="indicator", indicator=indicator)
     else:
-        return render_template("dashboard.html")
-
-
-
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
-
+        return redirect(url_for('get_dashboard'))
 
 
 # Get upload page
 #########################################
 @app.route('/upload', methods=['GET', 'POST'])
+@login_required
 def upload_file():
     names = []
     if request.method == 'POST':
@@ -518,15 +523,8 @@ def upload_file():
 
 
 
-@app.route('/settings', methods=['GET'])
-def settings():
-    try:
-        return render_template('settings.html', settings=settings)
-    except Exception as e:
-        return render_template('error.html', error=e)
-
-
 @app.route('/error', methods=['GET'])
+@login_required
 def error():
     return render_template('error.html')
 

@@ -1,0 +1,58 @@
+<script>
+  {% with messages = get_flashed_messages(category_filter=["error"]) %}
+    {% if messages %}
+      output = ''
+      {% for message in messages %}
+        output += '- {{message}} </br>'
+      {% endfor %}
+      $.niftyNoty({
+        type: "danger",
+        container : "floating",
+        title : "Error",
+        message : output,
+        timer : 3000
+      });
+    {% endif %}
+  {% endwith %}
+</script>
+
+
+
+<script>
+  {% with messages = get_flashed_messages(category_filter=["warning"]) %}
+    {% if messages %}
+      output = ''
+      {% for message in messages %}
+        output += '- {{message}} </br>'
+      {% endfor %}
+      $.niftyNoty({
+        type: "warning",
+        container : "floating",
+        title : "Warning",
+        message : output,
+        timer : 3000
+      });
+    {% endif %}
+  {% endwith %}
+</script>
+
+
+
+
+<script>
+  {% with messages = get_flashed_messages(category_filter=["success"]) %}
+    {% if messages %}
+      output = ''
+      {% for message in messages %}
+        output += '- {{message}} </br>'
+      {% endfor %}
+      $.niftyNoty({
+        type: "info",
+        container : "floating",
+        //title : "Info",
+        message : output,
+        timer : 3000
+      });
+    {% endif %}
+  {% endwith %}
+</script>
