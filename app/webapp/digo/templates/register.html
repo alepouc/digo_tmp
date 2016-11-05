@@ -10,11 +10,6 @@
       {% include 'flash.html' %}
 
 
-      <!-- BACKGROUND IMAGE -->
-      <!--===================================================-->
-      <div id="bg-overlay"></div>
-
-
       <!-- REGISTRATION FORM -->
       <!--===================================================-->
       <div class="cls-content">
@@ -24,28 +19,27 @@
                       <h3 class="h4 mar-no">Create a New Account</h3>
                       <p class="text-muted">Let's get some new Intelligence</p>
                   </div>
-                  {% from "_formhelpers.html" import render_field %}
-                  <form method=post action="/register">
+                  {% import "_formhelpers.html" as macros %}
+                  {% call macros.render_form(form, action_url=url_for('register'), action_text='Register', class_='register-form') %}
                       <div class="row">
                           <div class="col-sm-6">
                               <div class="form-group">
-                                  {{ render_field(form.username) }}
+                                  {{ macros.render_field(form.username, label_visible=false, placeholder='Username', type='username') }}
                               </div>
                               <div class="form-group">
-                                  {{ render_field(form.email) }}
+                                  {{ macros.render_field(form.email, label_visible=false, placeholder='Email', type='email') }}
                               </div>
                           </div>
                           <div class="col-sm-6">
                               <div class="form-group">
-                                  {{ render_field(form.password) }}
+                                  {{ macros.render_field(form.password, label_visible=false, placeholder='Password', type='password') }}
                               </div>
                               <div class="form-group">
-                                {{ render_field(form.confirm) }}
+                                {{ macros.render_field(form.confirm, label_visible=false, placeholder='Password Confirm', type='password') }}
                               </div>
                           </div>
                       </div>
-                      <button class="btn btn-primary btn-block" type="submit">Register</button>
-                  </form>
+                  {% endcall %}
               </div>
               <div class="pad-all">
                   Already have an account ? <a href="login" class="btn-link mar-rgt">Sign In</a>

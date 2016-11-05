@@ -53,6 +53,15 @@ class vt:
             print('generic exception: ' + traceback.format_exc())
 
 
+def returnNecessaryInputSettings():
+    return {
+            'type':['ipv4', 'hash'],
+            'need_api':'yes',
+            'need_username':'no',
+            'need_password':'no'
+            }
+
+
 def returnType():
     return ['hash']
 

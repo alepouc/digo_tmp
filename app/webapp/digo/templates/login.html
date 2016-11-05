@@ -23,20 +23,12 @@
                       <h3 class="h4 mar-no">Account Login</h3>
                       <p class="text-muted">Sign In to your account</p>
                   </div>
-                  {% from "_formhelpers.html" import render_field %}
-                  <form method=post action="/login">
-                      <div class="form-group">
-                          {{ render_field(form.username) }}
-                      </div>
-                      <div class="form-group">
-                          {{ render_field(form.password) }}
-                      </div>
-                      <!--<div class="checkbox pad-btm text-left">
-                          <input id="demo-form-checkbox" class="magic-checkbox" type="checkbox">
-                          <label for="demo-form-checkbox">Remember me</label>
-                      </div> -->
-                      <button class="btn btn-primary btn-lg btn-block" type="submit">Sign In</button>
-                  </form>
+                  {% import "_formhelpers.html" as macros %}
+                  {% call macros.render_form(form, action_url=url_for('login'), action_text='Login', class_='login-form') %}
+                    {{ macros.render_field(form.username, label_visible=false, placeholder='Username', type='username') }}
+                    {{ macros.render_field(form.password, label_visible=false, placeholder='Password', type='password') }}
+                    {{ macros.render_checkbox_field(form.remember_me, "Remember Me") }}
+                  {% endcall %}
               </div>
 
               <div class="pad-all">

@@ -67,8 +67,17 @@ def getWhoisResultForIp(input):
 
 
 
+def returnNecessaryInputSettings():
+    return {
+            'type':['domain', 'ipv4'],
+            'need_api':'no',
+            'need_username':'no',
+            'need_password':'no'
+            }
+
+
 def returnType():
-    return ['domain', 'ipv4']
+    return ['ipv4', 'domain']
 
 
 def getResult(conf):

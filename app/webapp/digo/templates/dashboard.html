@@ -16,47 +16,86 @@
 <!--Generic Javascript Function [ OPTIONAL ]-->
 <script src="/static/assets/js/generic_js.js"></script>
 
+
+
+
+
 <script>
 
+
+var all_types;
+var all_campaigns;
+
+
+// ------------------------------------------------
+//--  Get all types
+// ------------------------------------------------
+ajaxMaskUI({
+  url: "get_all_nodes_types",
+  type: "GET",
+  maskUI: 'rgba(176,176,176,0.7)'
+
+}).fail(function (jqXHR, textStatus, errorThrown) {
+  console.log('error ' + textStatus);
+
+}).done(function (data, textStatus, jqXHR) {
+  all_types = data;
+});
 
 // ------------------------------------------------
 //--  Get campaigns JSON
 // ------------------------------------------------
-tmp = get_all_campaigns();
-var campaigns = []
-for (row in tmp){
-  campaigns.push({'campaign':row})
-}
+ajaxMaskUI({
+  url: "get_all_campaigns",
+  type: "GET",
+  maskUI: 'rgba(176,176,176,0.7)'
 
-// ------------------------------------------------
-//--  Intilisation campaigns table
-// ------------------------------------------------
-$(function () {
-    output = '<thead><tr><th data-field="state" data-checkbox="true">ID</th>'
-    output += '<th data-field="campaign" data-sortable="true">campaign</th>'
-    output += '</tr></thead>'
+}).fail(function (jqXHR, textStatus, errorThrown) {
+  console.log('error ' + textStatus);
 
-    $('#table-campaign').html(output)
+}).done(function (data, textStatus, jqXHR) {
+  all_campaigns = data;
+  var campaigns = []
+  for (row in all_campaigns){
+    if (row != 'error'){
+      campaigns.push({'campaign':row, 'state': true})
+    }
+  }
 
-    $('#table-campaign').bootstrapTable({
-        data: campaigns
-    });
+  // ------------------------------------------------
+  //--  Intilisation campaigns table
+  // ------------------------------------------------
+  $(function () {
+      output = '<thead><tr><th data-field="state" data-checkbox="true">ID</th>'
+      output += '<th data-field="campaign" data-sortable="true">campaign</th>'
+      output += '</tr></thead>'
 
-    $('#toolbar-campaign').find('select').change(function () {
-        $('#table-campaign').bootstrapTable('refreshOptions', {
-            exportDataType: $(this).val()
-        });
-    });
+      $('#table-campaign').html(output)
+
+      $('#table-campaign').bootstrapTable({
+          data: campaigns
+      });
+
+      $('#toolbar-campaign').find('select').change(function () {
+          $('#table-campaign').bootstrapTable('refreshOptions', {
+              exportDataType: $(this).val()
+          });
+      });
+  });
+
+
+  // ------------------------------------------------
+  //--  When page loading, check every campaign and click on Show indicators
+  // ------------------------------------------------
+  $(function () {
+    $('#table-campaign').bootstrapTable('checkAll');
+    click_on_show_indicators()
+  });
 });
 
 
-// ------------------------------------------------
-//--  When page loading, check every campaign and click on Show indicators
-// ------------------------------------------------
-$(function () {
-  $('#table-campaign').bootstrapTable('checkAll');
-  click_on_show_indicators()
-});
+
+
 
 
 // ------------------------------------------------
@@ -68,6 +107,11 @@ $(function () {
   });
 });
 
+
+
+function refresh(){
+  window.location.reload()
+}
 
 // ------------------------------------------------
 //--  Actions when clicking on Campaign Show Graph
@@ -126,108 +170,197 @@ function click_on_show_indicators()
 
     for (var i = 0; i < numberOfSelections; i++){
       campaign = selections[i]['campaign']
-      data = get_indicators_specific_campaign_for_table_view(campaign)
+      ajaxMaskUI({
+        url: "get_indicators_specific_campaign_for_table_view",
+        type: "GET",
+        data: 'campaign='+campaign,
+        maskUI: 'rgba(176,176,176,0.7)',
+        async: false
+      }, i).fail(function (jqXHR, textStatus, errorThrown) {
+        console.log('error ' + textStatus);
+      }).done(function (data, textStatus, jqXHR) {
         if (i == 0){
           indicators_selected = data
         } else {
           for (row in data){
-            indicators_selected.push(data[row])
+            indicators_selected.push(data[row]);
           }
         }
-      }
-
-      types = []
-      output = '<thead><tr><th data-field="state" data-checkbox="true">ID</th>'
-
-      for (var row in indicators_selected){
-        for (j in indicators_selected[row]){
-          types.push(j)
-
-        }
-      }
-
-      types = uniq(types)
-      for (row in types){
-        output += '<th data-field="'+types[row]+'" data-sortable="true">'+types[row]+'</th>'
-      }
-
-      output += '</tr></thead>'
-
-      $('#table-indicators').html(output)
-
-      $('#table-indicators').bootstrapTable('destroy');
-      $('#table-indicators').bootstrapTable({ data: indicators_selected });
-
-      $('#toolbar-indicators').find('select').change(function () {
-        $('#table-indicators').bootstrapTable('refreshOptions', {
-          exportDataType: $(this).val()
-        });
       });
-
-
-
-
-
-    //--  Bar Chart - Number of indicators by campaign when clicking on Show Indicators
-    // ------------------------------------------------
-    var number_of_indicator_by_type_for_specific_campaign;
-    $("#morris-bar").empty();
-    $("#morris-donut").empty();
-
-    for (var i = 0; i < numberOfSelections; i++){
-      data = get_number_of_indicator_by_node_type_for_specific_campaign(selections[i]['campaign']);
-        if (i == 0){
-          number_of_indicator_by_type_for_specific_campaign = data
-        } else {
-            jQuery.extend(number_of_indicator_by_type_for_specific_campaign, data)
-        }
     }
 
+    types = []
+    output = '<thead><tr><th data-field="state" data-checkbox="true">ID</th>'
 
-    if (numberOfSelections > 0){
+    for (var row in indicators_selected){
+      for (j in indicators_selected[row]){
+        types.push(j)
 
-      data = []
-      ykeys = []
-      labels = []
-
-      for (row in number_of_indicator_by_type_for_specific_campaign) {
-        tmp = {}
-        tmp['y'] = row;
-        tmp[row] = number_of_indicator_by_type_for_specific_campaign[row];
-        data.push(tmp)
-        labels.push(row)
-        ykeys.push(row)
       }
+    }
 
-       Morris.Bar({
-         element: 'morris-bar',
-         data: data,
-         xkey: 'y',
-         ykeys: ykeys,
-         labels: labels,
-         barColors: colors_node_array,
-         grid: false,
-         resize:true,
-         hideHover: 'auto'
-       });
-     }
+    types = uniq(types)
+    for (row in types){
+      output += '<th data-field="'+types[row]+'" data-sortable="true">'+types[row]+'</th>'
+    }
 
-     data = [];
-     for (row in number_of_indicator_by_type_for_specific_campaign){
-       data.push({label: row, value: number_of_indicator_by_type_for_specific_campaign[row]})
-     }
+    output += '</tr></thead>'
 
-     Morris.Donut({
-      element: 'morris-donut',
-      data: data,
-      colors: colors_node_array,
-      resize:true
+    $('#table-indicators').html(output)
+
+    $('#table-indicators').bootstrapTable('destroy');
+    $('#table-indicators').bootstrapTable({ data: indicators_selected });
+
+    $('#toolbar-indicators').find('select').change(function () {
+      $('#table-indicators').bootstrapTable('refreshOptions', {
+        exportDataType: $(this).val()
+      });
+    });
+
+
+
+  //--  Bar Chart - Number of indicators by campaign when clicking on Show Indicators
+  // ------------------------------------------------
+  var number_of_indicator_by_type_for_specific_campaign;
+  $("#morris-bar").empty();
+  $("#morris-donut").empty();
+
+  for (var i = 0; i < numberOfSelections; i++){
+    ajaxMaskUI({
+      url: "get_number_of_indicator_by_node_type_for_specific_campaign",
+      type: "GET",
+      data: 'campaign='+selections[i]['campaign'],
+      maskUI: 'rgba(176,176,176,0.7)',
+      async: false
+    }, i).fail(function (jqXHR, textStatus, errorThrown) {
+      console.log('error ' + textStatus);
+    }).done(function (data, textStatus, jqXHR) {
+      if (i == 0){
+        number_of_indicator_by_type_for_specific_campaign = data
+      } else {
+          jQuery.extend(number_of_indicator_by_type_for_specific_campaign, data)
+      }
+    });
+  }
+
+
+  if (numberOfSelections > 0){
+
+    data = []
+    ykeys = []
+    labels = []
+
+    for (row in number_of_indicator_by_type_for_specific_campaign) {
+      tmp = {}
+      tmp['y'] = row;
+      tmp[row] = number_of_indicator_by_type_for_specific_campaign[row];
+      data.push(tmp)
+      labels.push(row)
+      ykeys.push(row)
+    }
+
+     Morris.Bar({
+       element: 'morris-bar',
+       data: data,
+       xkey: 'y',
+       ykeys: ykeys,
+       labels: labels,
+       barColors: colors_node_array,
+       grid: false,
+       resize:true,
+       hideHover: 'auto'
      });
+   }
+
+   data = [];
+   for (row in number_of_indicator_by_type_for_specific_campaign){
+     data.push({label: row, value: number_of_indicator_by_type_for_specific_campaign[row]})
+   }
+
+   Morris.Donut({
+    element: 'morris-donut',
+    data: data,
+    colors: colors_node_array,
+    resize:true
+   });
 
 }
 
 
 
+
+
+//-- #################################################################### -->
+//--  Action - Add a node -->
+//-- #################################################################### -->
+$(document).on('click', '#create_indicator', function() {
+  var output = "";
+  for (var row in all_types) {
+      output += '<option data-value="'+row+'" value="'+row+'"  />';
+  }
+  $('#types').html(output)
+
+  output = "";
+  for (var row in all_campaigns) {
+      output += '<option data-value="'+row+'" value="'+row+'"  />';
+  }
+  $('#campaigns').html(output)
+
+  if ("{{arg}}" == "campaign"){
+    $('input[name="campaign"]').val(campaigns_selected[0]);
+  }
+
+  $('#modal_add_new_node').modal()
+  $('#modal_add_new_node').on('show.bs.modal', function() {
+    $('#create_indicator_form').bootstrapValidator('resetForm', true);
+  });
+
+  $(document).ready(function() {
+    $('#create_indicator_form').bootstrapValidator({
+        message: 'This value is not valid',
+        feedbackIcons: {
+          valid: 'glyphicon glyphicon-ok',
+          invalid: 'glyphicon glyphicon-remove',
+          validating: 'glyphicon glyphicon-refresh'
+        },
+        excluded: [':disabled'],
+        fields: {
+          type: {
+            validators: {
+              notEmpty: {
+                message: 'The type is required'
+              }
+            }
+          },
+          value: {
+            validators: {
+              notEmpty: {
+                message: 'The value is required'
+              }
+            }
+          }
+        }
+      })
+      .on('success.form.bv', function(e) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          var valuesToSubmit = $(this).serialize();
+          ajaxMaskUI({
+            url: "create_indicator",
+            type: "POST",
+            data: valuesToSubmit,
+            maskUI: 'rgba(176,176,176,0.7)'
+
+          }).fail(function (jqXHR, textStatus, errorThrown) {
+            console.log('error ' + textStatus);
+
+          }).done(function (data, textStatus, jqXHR) {
+            $('#modal_add_new_node').modal('hide')
+            refresh();
+          });
+      });
+  });
+});
 
 
 </script>
@@ -274,6 +407,7 @@ function click_on_show_indicators()
             <div id="button-toolbar-campaign">
               <button id="delete-row" class="btn btn-danger" disabled><i class="pli-cross"></i> Delete</button>
               <button id="show-indicators" class="btn btn-default"><i class="pli-cross"></i> Show Indicators</button>
+              <button id="create_indicator" class="btn btn-default"><i class="pli-cross"></i> Create Indicator</button>
               <button id="campaign-show-graph" class="btn btn-default"><i class="pli-cross"></i> Show Graph</button>
             </div>
           </div>
@@ -383,5 +517,6 @@ function click_on_show_indicators()
 
 
 
+{% include "modals.html" %}
 
 {% endblock content %}

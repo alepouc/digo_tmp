@@ -6,8 +6,8 @@
         <!--Brand logo & name-->
         <!--================================-->
         <div class="navbar-header">
-            <a href="dashboard.html" class="navbar-brand">
-                <img src="/static/assets/img/logo.png" alt="Nifty Logo" class="brand-icon">
+            <a href="/" class="navbar-brand">
+                <div class="brand-icon psi-frog" id="psi-frog"></div>
                 <div class="brand-title">
                     <span class="brand-text">Digo</span>
                 </div>
@@ -33,11 +33,13 @@
                 <!--End Navigation toogle button-->
 
 
-                <!--Mega dropdown-->
-                <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                <li class="mega-dropdown">
-                  <a href="#" class="mega-dropdown-toggle">
-                    <i class="ti-view-grid icon-lg"></i>
+            </ul>
+
+
+            <ul class="nav navbar-top-links pull-left" id="navbar_dropdown">
+              <li>
+                  <a href="#" data-toggle="dropdown" class="mega-dropdown-toggle">
+                      <i class="ti-view-grid icon-lg"></i>
                   </a>
                   <div class="dropdown-menu mega-dropdown-menu" id="navbar_dropdown_menu">
                     <div class="clearfix">
@@ -50,27 +52,33 @@
                     </div>
                   </div>
                 </li>
-                <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-                <!--End mega dropdown-->
-
             </ul>
-            <ul class="nav navbar-top-links pull-right">
 
+
+
+            {% if request.path == "/graph" %}
+            <ul class="nav navbar-top-links pull-right">
+                <li>
+                    <a href="#" class="aside-toggle navbar-aside-icon">
+                        <i class="pci-ver-dots"></i>
+                    </a>
+                </li>
+            </ul>
+            {% endif %}
+
+            <ul class="nav navbar-top-links pull-right" id="navbar_dropdown1">
               <!--User dropdown-->
               <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
-              <li id="dropdown-user" class="dropdown">
                   <a href="#" data-toggle="dropdown" class="dropdown-toggle text-right">
                       <span class="pull-right">
-                          <i class="demo-pli-male ic-user"></i>
+                          <i class="ic-user"></i>
                       </span>
-                      <div class="username hidden-xs">Settings</div>
+                      <div class="username hidden-xs">{{ current_user.username }}</div>
                   </a>
-
-
-                  <div class="dropdown-menu dropdown-menu-md dropdown-menu-right panel-default">
+                  <div class="dropdown-menu dropdown-menu-md dropdown-menu-right panel-default" id="navbar_dropdown_menu1">
                       <ul class="head-list">
                           <li>
-                              <a href="#">
+                              <a href="/profile">
                                   <i class="demo-pli-male icon-lg icon-fw"></i> Profile
                               </a>
                           </li>
@@ -88,17 +96,8 @@
                           </a>
                       </div>
                   </div>
-              </li>
               <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
               <!--End user dropdown-->
-
-               {% if request.path == "/graph" %}
-                <li>
-                    <a href="#" class="aside-toggle navbar-aside-icon">
-                        <i class="pci-ver-dots"></i>
-                    </a>
-                </li>
-                {% endif %}
             </ul>
         </div>
         <!--================================-->
@@ -108,3 +107,34 @@
 </header>
 <!--===================================================-->
 <!--END NAVBAR-->
+
+
+<script>
+
+
+
+// ADD SLIDEDOWN ANIMATION TO DROPDOWN-MENU
+  $('#navbar_dropdown').on('show.bs.dropdown', function(e){
+    $('#navbar_dropdown_menu').removeClass('invisible');
+    $(this).find('#navbar_dropdown_menu').first().stop(true, true).slideDown(200);
+  });
+
+  // ADD SLIDEUP ANIMATION TO DROPDOWN-MENU
+  $('#navbar_dropdown').on('hide.bs.dropdown', function(e){
+    $(this).find('#navbar_dropdown_menu').first().stop(true, true).slideUp(200);
+  });
+
+
+// ADD SLIDEDOWN ANIMATION TO DROPDOWN-MENU
+  $('#navbar_dropdown1').on('show.bs.dropdown', function(e){
+    $('#navbar_dropdown_menu1').removeClass('invisible');
+    $(this).find('#navbar_dropdown_menu1').first().stop(true, true).slideDown(200);
+  });
+
+  // ADD SLIDEUP ANIMATION TO DROPDOWN-MENU
+  $('#navbar_dropdown1').on('hide.bs.dropdown', function(e){
+    $(this).find('#navbar_dropdown_menu1').first().stop(true, true).slideUp(200);
+  });
+
+
+</script>

@@ -1,14 +1,73 @@
-{% macro render_field(field) %}
-  <dt>{{ field.label }}
-  <dd>{{ field(**kwargs)|safe }}
-  </dd>
+{% macro render_field(field, label_visible=true) -%}
+    <div class="form-group {% if field.errors %}has-error{% endif %} {{ kwargs.pop('class_', '') }}">
+        {% if (field.type != 'HiddenField' and field.type !='CSRFTokenField') and label_visible %}
+            <label for="{{ field.id }}" class="control-label">{{ field.label }}</label>
+        {% endif %}
+        {{ field(class_='form-control', **kwargs) }}
+        {% if field.errors %}
+            {% for e in field.errors %}
+                <p class="help-block">{{ e }}</p>
+            {% endfor %}
+        {% endif %}
+    </div>
+{%- endmacro %}
 
-  {% if field.errors %}
-    <small class=errors>
-    {% for error in field.errors %}
-      {{ error }}
+
+{% macro render_checkbox_field(field, label) -%}
+    <div class="checkbox">
+        <label class="form-checkbox form-icon">
+            {{ field(type='checkbox', **kwargs) }} {{ label }}
+        </label>
+    </div>
+{%- endmacro %}
+
+
+{% macro render_radio_field(field) -%}
+    {% for value, label, _ in field.iter_choices() %}
+        <div class="radio">
+            <label>
+                <input type="radio" name="{{ field.id }}" id="{{ field.id }}" value="{{ value }}">{{ label }}
+            </label>
+        </div>
     {% endfor %}
-  </small>
-  {% endif %}
+{%- endmacro %}
 
-{% endmacro %}
+
+
+
+{% macro render_title_field(field) -%}
+  <div>
+      <h4 id="type-css-settings">{{ field.id }}</h4>
+  </div>
+{%- endmacro %}
+
+
+{% macro render_form(form, action_url='', action_text='Submit', class_='', btn_class='btn btn-default', panel_footer=false) -%}
+    <form method="POST" action="{{ action_url }}" role="form" class="{{ class_ }}">
+      <div class="panel-body">
+        {{ form.hidden_tag() if form.hidden_tag }}
+        {% if caller %}
+            {{ caller() }}
+        {% else %}
+            {% for f in form %}
+                {% if f.type == 'BooleanField' %}
+                    {{ render_checkbox_field(f,f.label) }}
+                {% elif f.type == 'RadioField' %}
+                    {{ render_radio_field(f) }}
+                {% elif f.type == 'TitleField' %}
+                    {{ render_title_field(f) }}
+                {% else %}
+                    {{ render_field(f) }}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+      </div>
+      {% if panel_footer %}
+        <div class="panel-footer text-right">
+          <button type="submit" class="{{ btn_class }}">{{ action_text }} </button>
+        </div>
+      {% else %}
+        <button type="submit" class="{{ btn_class }}">{{ action_text }} </button>
+      {% endif %}
+    </form>
+{%- endmacro %}

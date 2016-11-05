@@ -30,26 +30,26 @@ var colors_node_array = [
 // ------------------------------------------------
 // --- Ajax function
 // ------------------------------------------------
-ajax_function = function(uri, method, data, async_value) {
- if(async_value == undefined)
- {
-   async_value = true;
- }
- var request = {
-     url: uri,
-     type: method,
-     cache: false,
-     async: async_value,
-     data: data,
-     success: function(d){
-       ajax_return = d
-     }
- };
- return $.ajax(request);
-}
+//ajax_function = function(uri, method, data, async_value) {
+// if(async_value == undefined)
+// {
+//   async_value = true;
+// }
+// var request = {
+//     url: uri,
+//     type: method,
+//     cache: false,
+//     async: async_value,
+//     data: data,
+//     success: function(d){
+//       ajax_return = d
+//     }
+// };
+// return $.ajax(request);
+//}
 
 
-function ajaxMaskUI(settings) {
+function ajaxMaskUI(settings, loop=false) {
 
     function maskPageOn(color) { // color can be ie. 'rgba(176,176,176,0.7)' or 'transparent'
         var div = $('#maskPageDiv');
@@ -116,49 +116,4 @@ function uniq(a) {
     return a.sort().filter(function(item, pos, ary) {
         return !pos || item != ary[pos - 1];
     })
-}
-
-
-
-// ------------------------------------------------
-//--  Get campaigns
-// ------------------------------------------------
-function get_all_campaigns(){
-  ajax_function("get_all_campaigns","GET", false, false).done(function(json) {
-    data = json;
-  });
-  return data;
-}
-
-
-// ------------------------------------------------
-//--  Get indicators for specific campaign for table
-// ------------------------------------------------
-function get_indicators_specific_campaign_for_table_view(campaign){
-  ajax_function("get_indicators_specific_campaign_for_table_view","GET", 'campaign='+campaign, false).done(function(json) {
-    data = json;
-  });
-  return data;
-}
-
-
-// ------------------------------------------------
-//--  Get indicators by node type for specific campaign
-// ------------------------------------------------
-function get_number_of_indicator_by_node_type_for_specific_campaign(campaign){
-  ajax_function("get_number_of_indicator_by_node_type_for_specific_campaign","GET", 'campaign='+campaign, false).done(function(json) {
-    data = json;
-  });
-  return data;
-}
-
-
-// ------------------------------------------------
-//--  Get indicators by node type for specific campaign
-// ------------------------------------------------
-function get_neo4j_json_for_table(arg){
-  ajax_function("get_neo4j_json_for_table","GET", arg, false).done(function(json) {
-    data = json;
-  });
-  return data;
 }

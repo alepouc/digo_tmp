@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 from neo4jrestclient.client import GraphDatabase
-from wtforms import Form, BooleanField, StringField, PasswordField, validators
+from wtforms import Form, BooleanField, StringField, PasswordField, validators, Field
 import random
 from passlib.hash import bcrypt
+from glob import glob
+
 
 
 gdb = GraphDatabase("http://digo-db:7474/db/data", username="neo4j", password="debug")
@@ -20,7 +22,7 @@ conf = {
 
 
 class RegistrationForm(Form):
-    username = StringField('Username', [validators.Length(min=4, max=25)])
+    username = StringField('Username', [validators.Length(min=2, max=25)])
     email = StringField('Email Address', [validators.Length(min=6, max=35)])
     password = PasswordField('New Password', [
         validators.DataRequired(),
@@ -30,9 +32,32 @@ class RegistrationForm(Form):
 
 
 class LoginForm(Form):
-    username = StringField('Username', [validators.Length(min=4, max=25)])
+    username = StringField('Username', [validators.Length(min=1, max=25)])
     password = PasswordField('Password', [validators.DataRequired()])
+    remember_me = BooleanField('remember_me', default=False)
 
+
+
+class ProfileForm(Form):
+    currentpassword = PasswordField('Old Password', [validators.DataRequired()])
+    newpassword = PasswordField('New Password', [
+        validators.DataRequired(),
+        validators.EqualTo('confirm', message='Passwords must match')
+    ])
+    confirm = PasswordField('Repeat Password')
+
+
+class SettingsForm(Form):
+    pass
+
+
+class TitleField(Field):
+    def _value(self):
+        if self.data:
+            return self.data
+    def process_formdata(self, valuelist):
+        if valuelist:
+            self.data = valuelist[0]
 
 
 class User:
@@ -40,27 +65,20 @@ class User:
         self.username = username.lower()
         self.email = None
         self.password = None
-
-    def find(self):
+        self.settings = {}
         query = 'START n=node(*) WHERE n.username = "'+self.username+'" and labels(n) = "user" return n'
         user = gdb.query(query, data_contents=True)
-        return user
-
-    def register(self, email, password):
-        new_node = gdb.nodes.create(username=self.username, email=email, password=bcrypt.encrypt(password))
-        new_node.labels.add('user')
-        return True
-
-    def verify_password(self, password):
-        user = self.find()
         if user:
-            return bcrypt.verify(password, user.rows[0][0]['password'])
-        else:
-            return False
+            if 'email' in user.rows[0][0]:
+                self.email = user.rows[0][0]['email']
+            if 'password' in user.rows[0][0]:
+                self.password = user.rows[0][0]['password']
+            if 'settings' in user.rows[0][0]:
+                self.settings = user.rows[0][0]['settings']
 
     def get_id(self):
         """Return the email address to satisfy Flask-Login's requirements."""
-        return self.username
+        return str(self.username)
 
     def is_authenticated(self):
         """Return True if the user is authenticated."""
@@ -73,6 +91,62 @@ class User:
     def is_anonymous(self):
         """False, as anonymous users aren't supported."""
         return False
+
+    def find(self):
+        if self.email != None:
+            return True
+        else:
+            return False
+
+    def register(self, email, password):
+        settings = self.set_default_settings()
+        new_node = gdb.nodes.create(username=self.username, email=email, password=bcrypt.encrypt(password), settings=str(settings))
+        new_node.labels.add('user')
+        return True
+
+    def verify_password(self, password):
+        user = self.find()
+        if user:
+            return bcrypt.verify(password, self.password)
+        else:
+            return False
+
+    def update_password(self, password):
+        query = 'MATCH (n) WHERE n.username="'+self.username+'" SET n.password="'+bcrypt.encrypt(password)+'"'
+        n = gdb.query(query)
+        return True
+
+    def set_default_settings(self):
+        files = glob('digo/digos/*')
+        settings = {}
+        for row in files:
+            if ".py" in row:
+                if "__init__.py" not in row:
+                    digo = row.split("/")[2].split(".")[0]
+                    digos_import = __import__('digos', globals(), locals(), [], 1)
+                    func = getattr(digos_import, digo)
+                    returnNecessaryInputSettings = func.returnNecessaryInputSettings()
+                    Typelist = returnNecessaryInputSettings['type']
+                    Api = returnNecessaryInputSettings['need_api']
+                    Username = returnNecessaryInputSettings['need_username']
+                    Password = returnNecessaryInputSettings['need_password']
+                    if type(Typelist) == list:
+                        for Type in Typelist:
+                            if Type not in settings:
+                                settings[Type] = {}
+                            settings[Type][digo] = {'ison':'OFF', 'need_api': Api, 'need_username': Username, 'need_password': Password}
+        return settings
+
+
+
+
+    def set_settings(self, settings):
+        query = 'MATCH (n) WHERE n.username="'+self.username+'" SET n.settings="'+str(settings)+'"'
+        n = gdb.query(query)
+        return True
+
+
+
 
 
 
@@ -158,23 +232,3 @@ def convertNeo4jJsonToTable(neo4jJson):
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
-
-
-# Add user
-#########################################
-def add_user(user):
-    #print(user.username)
-    #print(user.email)
-    #print(user.password)
-
-    #query = 'START n=node(*) WHERE n.type = "'+Value+'" return n'
-    #results = gdb.query(query, data_contents=True)
-
-    #if results:
-    #    for row in results.rows:
-    #        return "The node is already present in the database"
-    #else:
-    #    new_node = gdb.nodes.create(type=Value, confidence=Confidence, diamond_model=Diamond_model, campaign=Campaign, first_seen=FirstSeen, last_seen=LastSeen, tags=Tags, comments=Comments)
-    #    new_node.labels.add(Type)
-    #    return str(new_node.id)
-    return "ok"

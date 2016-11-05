@@ -1,0 +1,186 @@
+<!-- #################################################################### -->
+<!--  Modal used for adding a node -->
+<!-- #################################################################### -->
+<div class="modal fade" id="modal_add_new_node" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+          <span class="sr-only">Close</span>
+        </button>
+        <h4 class="modal-title" id="myModalLabel">New node</h4>
+      </div>
+      <div class="modal-body">
+        <form id="create_indicator_form">
+          <div class="form-group">
+            <div class="col-md-12">
+              <label class="modal-form-label">Type (required)</label></br>
+              <div class="dropdown">
+                <input class="form-control modal-form-input" name="type" type="search" id="inputtype" list="types" placeholder="Pick a type ..." pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character">
+                <datalist id="types"></datalist>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-md-12">
+              <label class="modal-form-label">Value (required)</label>
+              <input class="form-control modal-form-input" name="value" type=text  id="inputvalue" placeholder="8.8.8.8, or toto.com ..." pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character" />
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-md-12">
+              <label class="modal-form-label">Confidence (optional)</label>
+              <select class="form-control modal-form-input" name="confidence" id="inputconfidence">
+                <option value="" selected="true"></option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-md-12">
+              <label class="modal-form-label">Diamond Model (optional)</label>
+              <select class="form-control modal-form-input" name="diamondmodel" id="inputdiamondmodel">
+                <option value="" selected="true"></option>
+                <option value="Adversary">Adversary</option>
+                <option value="Infrastructure">Infrastructure</option>
+                <option value="Victim">Victim</option>
+                <option value="Capability">Capability</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-md-12">
+              <label class="modal-form-label">Campaign/Investigation (optional)</label></br>
+              <div class="dropdown">
+                <input class="form-control modal-form-input" name="campaign" type="search" id="inputcampaign" list="campaigns" placeholder="Pick a campaign ..." pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character" >
+                <datalist id="campaigns"></datalist>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-md-12">
+              <label class="modal-form-label">Tags (optional)</label>
+              <input type=text class="form-control modal-form-input" name="tags" id="inputtags" placeholder="ransomware, phishing, etc." pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character"></input>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-md-12">
+              <label class="modal-form-label">Comments (optional)</label>
+              <textarea class="form-control modal-form-input" name="comments" id="inputcomments" row="4" placeholder="Up to you :P" pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character"></textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="modal-footer">
+              <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary">Add new node</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+
+<!-- #################################################################### -->
+<!--  Modal used for adding a relationship -->
+<!-- #################################################################### -->
+<div class="modal fade" id="modal_add_new_relationship" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+          <span class="sr-only">Close</span>
+        </button>
+        <h4 class="modal-title" id="myModalLabel">New relationship</h4>
+      </div>
+      <div class="modal-body">
+        <form id="add_relationship_form">
+          <div class="form-group">
+            <div class="col-md-12">
+              <label class="modal-form-label">Relationship</label></br>
+              <div class="dropdown">
+                <input class="form-control modal-form-input" name="id1" type="search" id="inputid" list="relations" placeholder="Pick a type ..." >
+                <datalist id="relations"></datalist>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="modal-footer">
+              <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary">Add new relationship</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+<!-- #################################################################### -->
+<!--  Modal used for adding a property -->
+<!-- #################################################################### -->
+<div class="modal fade" id="modal_add_new_property" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+          <span class="sr-only">Close</span>
+        </button>
+        <h4 class="modal-title" id="myModalLabel">New property</h4>
+      </div>
+      <div class="modal-body">
+        <form id="add_property_form">
+          <div class="form-group">
+            <div class="col-md-12">
+              <label class="modal-form-label">Key</label>
+              <input type=text class="form-control modal-form-input" name="propertykey" id="inputpropertykey" placeholder="address, etc."></input>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-md-12">
+              <label class="modal-form-label">Value</label>
+              <input type=text class="form-control modal-form-input" name="propertyvalue" id="inputpropertyvalue" placeholder="5 collins street ..."></input>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="modal-footer">
+              <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary">Add new property</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+
+<!-- #################################################################### -->
+<!--  Modal used for editting a node -->
+<!-- #################################################################### -->
+<div class="modal fade" id="modal_edit_node" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+          <span class="sr-only">Close</span>
+        </button>
+        <h4 class="modal-title" id="myModalLabel">Edit node</h4>
+      </div>
+      <div class="modal-body">
+        <form id="edit_node_form">
+        </form>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

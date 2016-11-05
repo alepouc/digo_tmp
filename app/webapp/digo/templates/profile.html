@@ -14,7 +14,7 @@
   <!--Page Title-->
   <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
   <div id="page-title">
-    <h1 class="page-header text-overflow">Digos</h1>
+    <h1 class="page-header text-overflow">Profile</h1>
   </div>
 
   <!--Page content-->
@@ -26,24 +26,19 @@
     <!--===================================================-->
     <div class="row">
 
-
+      <!-- Campaign Table ->
+      <!=================================================== -->
       <div class="col-sm-6">
         <div class="panel">
             <div class="panel-heading">
-                <h3 class="panel-title">Digos enabled</h3>
+                <h3 class="panel-title">Change Password</h3>
             </div>
-            {% from "_formhelpers.html" import render_form %}
-            {{ render_form(leftform, action_url=url_for('settings'), action_text='Update', class_='settings-leftform', panel_footer=true) }}
-        </div>
-      </div>
-
-      <div class="col-sm-6">
-        <div class="panel">
-            <div class="panel-heading">
-                <h3 class="panel-title">Advanced Settings</h3>
-            </div>
-            {% from "_formhelpers.html" import render_form %}
-            {{ render_form(rightform, action_url=url_for('settings'), action_text='Update', class_='settings-rightform', panel_footer=true) }}
+            {% import "_formhelpers.html" as macros %}
+            {% call macros.render_form(form, action_url=url_for('profile'), action_text='Update', class_='profile-form', panel_footer=true) %}
+              {{ macros.render_field(form.currentpassword, label_visible=false, placeholder='Current Password', type='password') }}
+              {{ macros.render_field(form.newpassword, label_visible=false, placeholder='New Password', type='password') }}
+              {{ macros.render_field(form.confirm, label_visible=false, placeholder='Password Confirm', type='password') }}
+            {% endcall %}
         </div>
       </div>
 

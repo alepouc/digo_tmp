@@ -5,29 +5,37 @@ from flask import Flask, request, redirect, jsonify, render_template, Response, 
 from flask_login import current_user, LoginManager, UserMixin, login_required, login_user, logout_user
 import time
 import json
-from glob import glob
 import os
 from collections import defaultdict
 from collections import Counter
 from werkzeug import secure_filename
 import csv
 import io
+import ast
+from pprint import pprint
 
 
 from .models import *
 
 app = Flask(__name__)
 
-
+# Instanciation of LoginManager Class
 login_manager = LoginManager()
+
+# Initialisation
 login_manager.init_app(app)
+
+# Specify the page of login page
 login_manager.login_view = 'login'
 
+# user_loader callback used to reload the user object from the user ID stored in the session
 @login_manager.user_loader
 def load_user(username):
     return User(username)
 
 
+# Register
+#########################################
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm(request.form)
@@ -44,6 +52,8 @@ def register():
     return render_template('register.html', form=form)
 
 
+# Login
+#########################################
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm(request.form)
@@ -52,18 +62,139 @@ def login():
         if not user.verify_password(form.password.data):
             flash('Invalid login.', 'error')
         else:
-            login_user(user)
+            if form.remember_me:
+                login_user(user, remember=True)
+            else:
+                login_user(user)
+
             if current_user.is_authenticated:
                 flash('Logged in.', 'success')
                 return redirect(url_for('get_home_page'))
     return render_template('login.html', form=form)
 
 
+# Logout
+#########################################
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+
+
+# Profile page
+#########################################
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    '''
+    try:
+    '''
+    form = ProfileForm(request.form)
+    if request.method == 'POST' and form.validate():
+        if not current_user.verify_password(form.currentpassword.data):
+            flash('Invalid current password.', 'error')
+        else:
+            current_user.update_password(form.newpassword.data)
+            flash('Password changed.', 'success')
+            return redirect(url_for('profile'))
+    return render_template('profile.html', form=form)
+    '''
+    except Exception as e:
+        return render_template('error.html', error=e)
+    '''
+
+
+# Settings page
+#########################################
+@app.route('/settings', methods=['GET', 'POST'])
+@login_required
+def settings():
+
+    class LeftSettingsForm(SettingsForm):
+        pass
+
+    class RightSettingsForm(SettingsForm):
+        pass
+
+    user_settings = ast.literal_eval(current_user.settings)
+
+    for type in user_settings:
+
+        # Left form
+        setattr(LeftSettingsForm, type.upper(), TitleField(type.upper()))
+        for digo in user_settings[type]:
+            if user_settings[type][digo]['ison'] == 'ON':
+                setattr(LeftSettingsForm, type+'-'+digo, BooleanField(digo, default=True))
+            else:
+                setattr(LeftSettingsForm, type+'-'+digo, BooleanField(digo, default=False))
+
+            # Right form
+            if user_settings[type][digo]['need_api'] != 'no':
+                setattr(RightSettingsForm, digo+' - API', StringField(digo+' - API', default=user_settings[type][digo]['need_api']))
+            if user_settings[type][digo]['need_username'] != 'no':
+                setattr(RightSettingsForm, digo+' - USERNAME', StringField(digo+' - USERNAME', default=user_settings[type][digo]['need_username']))
+            if user_settings[type][digo]['need_password'] != 'no':
+                setattr(RightSettingsForm, digo+' - PASSWORD', StringField(digo+' - PASSWORD', default=user_settings[type][digo]['need_password']))
+
+
+
+    leftform = LeftSettingsForm(request.form)
+    rightform = RightSettingsForm(request.form)
+
+    if request.method == 'POST':
+
+        if leftform.validate():
+
+            type = ''
+            digo = ''
+            for field in leftform:
+                if field.type == 'TitleField':
+                    type = field.id.lower()
+                if field.type == "BooleanField":
+                    digo = field.name.split('-')[1]
+                    if field.data == True:
+                        user_settings[type][digo]['ison'] = 'ON'
+                    else:
+                        user_settings[type][digo]['ison'] = 'OFF'
+
+
+        if rightform.validate():
+
+            for field in rightform:
+                if field.name.split(' - ')[1] == 'API':
+                    for type in user_settings:
+                        digo = field.name.split(' - ')[0]
+                        if digo in user_settings[type]:
+                            user_settings[type][digo]['need_api'] = str(field.data)
+                if field.name.split(' - ')[1] == 'USERNAME':
+                    for type in user_settings:
+                        digo = field.name.split(' - ')[0]
+                        if digo in user_settings[type]:
+                            user_settings[type][digo]['need_username'] = str(field.data)
+                if field.name.split(' - ')[1] == 'PASSWORD':
+                    for type in user_settings:
+                        digo = field.name.split(' - ')[0]
+                        if digo in user_settings[type]:
+                            user_settings[type][digo]['need_password'] = str(field.data)
+
+
+
+        current_user.set_settings(user_settings)
+
+
+    return render_template('settings.html', leftform=leftform, rightform=rightform)
+
+    '''
+    form = SettingsForm(request.form)
+    if request.method == 'POST' and form.validate():
+        return redirect(url_for('settings'))
+    return render_template('settings.html', settings=settings)
+    '''
+
+
+
 
 
 # Get neo4j JSON for graph
@@ -80,17 +211,17 @@ def get_neo4j_json_for_graph():
                 arg += 'n.campaign="'+campaigns[i]+'"'
             else:
                 arg += 'n.campaign="'+campaigns[i]+'" OR '
-        query = 'MATCH (n) WHERE '+arg+'  OPTIONAL MATCH (n)-[r]-() RETURN n, r'
+        query = 'MATCH (n) WHERE NOT labels(n)="user" AND '+arg+'  OPTIONAL MATCH (n)-[r]-() RETURN n, r'
 
     elif request.args.getlist('indicator'):
         arg = []
         indicators = request.args.getlist('indicator')
         for i in range(0, len(indicators)):
             arg.append(int(indicators[i]))
-        query = 'MATCH (n) WHERE ID(n) IN '+str(arg)+' OPTIONAL MATCH (n)-[r]-() RETURN n,r'
+        query = 'MATCH (n) WHERE NOT labels(n)="user" AND ID(n) IN '+str(arg)+' OPTIONAL MATCH (n)-[r]-() RETURN n,r'
 
     else:
-        query = 'MATCH (n) OPTIONAL MATCH (n)-[r]-() RETURN n, r LIMIT 50'
+        query = 'MATCH (n) WHERE NOT labels(n)="user" OPTIONAL MATCH (n)-[r]-() RETURN n, r LIMIT 50'
 
     results = gdb.query(query, data_contents=True)
     SigmaJSON = convertNeo4jJsonToSigma(results.graph)
@@ -111,18 +242,19 @@ def get_neo4j_json_for_table():
                 arg += 'n.campaign="'+campaigns[i]+'"'
             else:
                 arg += 'n.campaign="'+campaigns[i]+'" OR '
-        query = 'MATCH (n) WHERE '+arg+'  OPTIONAL MATCH (n)-[r]-() RETURN n, r'
+        query = 'MATCH (n) WHERE NOT labels(n)="user" AND '+arg+'  OPTIONAL MATCH (n)-[r]-() RETURN n, r'
 
-    if request.args.getlist('indicator'):
+    elif request.args.getlist('indicator'):
         arg = []
         indicators = request.args.getlist('indicator')
         for i in range(0, len(indicators)):
             arg.append(int(indicators[i]))
-        query = 'MATCH (n) WHERE ID(n) IN '+str(arg)+' OPTIONAL MATCH (n)-[r]-() RETURN n,r'
+        query = 'MATCH (n) WHERE NOT labels(n)="user" AND ID(n) IN '+str(arg)+' OPTIONAL MATCH (n)-[r]-() RETURN n,r'
 
     else:
-        query = 'MATCH (n) OPTIONAL MATCH (n)-[r]-() RETURN n, r LIMIT 50'
+        query = 'MATCH (n) WHERE NOT labels(n)="user" OPTIONAL MATCH (n)-[r]-() RETURN n, r LIMIT 50'
 
+    print(query)
     results = gdb.query(query, data_contents=True)
     tableJSON = convertNeo4jJsonToTable(results.graph)
     return jsonify(tableJSON)
@@ -136,11 +268,14 @@ def get_neo4j_json_for_table():
 @login_required
 def get_all_campaigns():
     campaigns = {}
-    query = 'MATCH (n) return distinct n.campaign'
+    query = 'MATCH (n) WHERE NOT labels(n)="user" return distinct n.campaign'
     results = gdb.query(query, data_contents=True)
-    for row in results.rows:
-        campaigns[row[0]] = row[0]
-    return jsonify(campaigns)
+    if results:
+        for row in results.rows:
+            campaigns[row[0]] = row[0]
+        return jsonify(campaigns)
+    else:
+        return jsonify({"error": "no result"})
 
 
 
@@ -150,7 +285,7 @@ def get_all_campaigns():
 @login_required
 def get_indicators_specific_campaign_for_table_view():
     campaign = request.args.get("campaign")
-    query = 'MATCH (n) WHERE n.campaign="'+campaign+'" return n'
+    query = 'MATCH (n) WHERE NOT labels(n)="user" AND n.campaign="'+campaign+'" return n'
     results = gdb.query(query, data_contents=True)
     tableJSON = convertNeo4jJsonToTable(results.graph)
     return jsonify(tableJSON)
@@ -165,7 +300,7 @@ def get_indicators_specific_campaign_for_table_view():
 def get_number_of_indicator_by_node_type_for_specific_campaign():
     campaign = request.args.get("campaign")
     output = []
-    query = 'START n=node(*) WHERE n.campaign="'+campaign+'" RETURN labels(n)'
+    query = 'START n=node(*) WHERE NOT labels(n)="user" AND n.campaign="'+campaign+'" RETURN labels(n)'
     results = gdb.query(query, data_contents=True)
     if results:
         for row in results.rows:
@@ -176,7 +311,7 @@ def get_number_of_indicator_by_node_type_for_specific_campaign():
     return jsonify(dict(c))
 
 
-
+'''
 # Get all digos
 #########################################
 @app.route('/get_all_digos')
@@ -193,10 +328,9 @@ def get_all_digos():
                 returnType = func.returnType()
                 for type in returnType:
                     digos.setdefault(type, []).append(digo)
-
+    print(digos)
     return digos
-
-
+'''
 
 # Get digo result
 #########################################
@@ -234,7 +368,7 @@ def get_all_nodes_types():
             "threat_actor": "threat_actor"
         }
 
-    query = 'START n=node(*) RETURN distinct labels(n)'
+    query = 'START n=node(*) WHERE NOT labels(n)="user" RETURN distinct labels(n)'
     results = gdb.query(query, data_contents=True)
     if results:
         for row in results.rows:
@@ -250,7 +384,7 @@ def get_all_nodes_types():
 @login_required
 def get_number_of_indicator_by_node_type():
     output = []
-    query = 'START n=node(*) RETURN labels(n)'
+    query = 'START n=node(*) WHERE NOT labels(n)="user" RETURN labels(n)'
     results = gdb.query(query, data_contents=True)
     if results:
         for row in results.rows:
@@ -263,9 +397,9 @@ def get_number_of_indicator_by_node_type():
 
 # Add node
 #########################################
-@app.route('/add_node', methods=['POST'])
+@app.route('/create_indicator', methods=['POST'])
 @login_required
-def add_node():
+def create_indicator():
     Type = request.form["type"]
     Value = request.form["value"]
 
@@ -281,14 +415,6 @@ def add_node():
     if Campaign == "":
         Campaign  = "NULL"
 
-    FirstSeen = request.form["firstseen"]
-    if FirstSeen == "":
-        FirstSeen = "NULL"
-
-    LastSeen = request.form["lastseen"]
-    if LastSeen == "":
-        LastSeen = "NULL"
-
     Tags = request.form["tags"]
     if Tags == "":
         Tags = "NULL"
@@ -297,14 +423,13 @@ def add_node():
     if Comments == "":
         Comments = "NULL"
 
-    query = 'START n=node(*) WHERE n.type = "'+Value+'" return n'
+    query = 'START n=node(*) WHERE NOT labels(n)="user" AND n.type = "'+Value+'" return n'
     results = gdb.query(query, data_contents=True)
-
     if results:
         for row in results.rows:
             return "The node is already present in the database"
     else:
-        new_node = gdb.nodes.create(type=Value, confidence=Confidence, diamond_model=Diamond_model, campaign=Campaign, first_seen=FirstSeen, last_seen=LastSeen, tags=Tags, comments=Comments)
+        new_node = gdb.nodes.create(type=Value, confidence=Confidence, diamond_model=Diamond_model, campaign=Campaign, tags=Tags, comments=Comments)
         new_node.labels.add(Type)
         return str(new_node.id)
 
@@ -411,13 +536,7 @@ def edit_node():
 
 
 
-@app.route('/settings', methods=['GET'])
-@login_required
-def settings():
-    try:
-        return render_template('settings.html', settings=settings)
-    except Exception as e:
-        return render_template('error.html', error=e)
+
 
 
 
@@ -448,7 +567,13 @@ def get_graph():
     indicator = request.args.getlist('indicator')
 
     # Function executed by default
-    digos = get_all_digos()
+    #digos = get_all_digos()
+    digos = {}
+    user_settings = ast.literal_eval(current_user.settings)
+    for type in user_settings:
+        for digo in user_settings[type]:
+            digos.setdefault(type, []).append(digo)
+
 
     if campaign:
         return render_template("graph.html", digos=digos, arg="campaign", campaign=campaign)
@@ -496,10 +621,6 @@ def upload_file():
                         output['diamondmodel'] = 'NULL'
                     if 'campaign' not in data[row]:
                         output['campaign'] = 'NULL'
-                    if 'firstseen' not in data[row]:
-                        output['firstseen'] = 'NULL'
-                    if 'lastseen' not in data[row]:
-                        output['lastseen'] = 'NULL'
                     if 'tags' not in data[row]:
                         output['tags'] = 'NULL'
                     if 'comments' not in data[row]:

@@ -206,7 +206,7 @@ var config = {
       type = node['properties']['type'].toLowerCase();
       var digos = "";
       for (var row in all_digos[type]) {
-        digos += '<li id="link-actions"><a href="#">'+all_digos[type][row]+'</a></li>'
+        digos += '<li id="'+all_digos[type][row]+'"><a href="#">'+all_digos[type][row]+'</a></li>'
       }
 
       if (digos == ""){
@@ -239,7 +239,7 @@ var config = {
                     <button class="btn btn-mint btn-active-purple dropdown-toggle" data-toggle="dropdown" type="button">
                         Digos <i class="dropdown-caret"></i>
                     </button>
-                    <ul class="dropdown-menu">
+                    <ul class="dropdown-menu" id="link-actions">
                         `+digos+`
                     </ul>
                 </div>
@@ -308,7 +308,7 @@ var config = {
       ' <div class="sigma-tooltip-header">Menu</div>' +
       '  <div class="sigma-tooltip-body">' +
       '    <table>' +
-      '      <tr><th id="add_node"><a href="#">Add a node</a></th><td></td></tr>' +
+      '      <tr><th id="create_indicator"><a href="#">Create Indicator</a></th><td></td></tr>' +
       '    </table>' +
       '  </div>' +
       '  <div class="sigma-tooltip-footer"></div>'
@@ -506,44 +506,60 @@ function refresh_graph(){
     $("#aside-content").html(table);
 
     if ("{{arg}}" == "campaign"){
-      data = get_neo4j_json_for_table(arg);
-      output = '<thead><tr><th data-field="state" data-checkbox="true">ID</th>'
-      for (row in data[0]){
-        output += '<th data-field="'+row+'" data-sortable="true">'+row+'</th>'
-      }
-      output += '</tr></thead>'
-      $('#table-indicators').html(output)
+      ajaxMaskUI({
+        url: "get_neo4j_json_for_table",
+        type: "GET",
+        data: arg,
+        maskUI: 'rgba(176,176,176,0.7)'
+      }, i).fail(function (jqXHR, textStatus, errorThrown) {
+        console.log('error ' + textStatus);
+      }).done(function (data, textStatus, jqXHR) {
+        output = '<thead><tr><th data-field="state" data-checkbox="true">ID</th>'
+        for (row in data[0]){
+          output += '<th data-field="'+row+'" data-sortable="true">'+row+'</th>'
+        }
+        output += '</tr></thead>'
+        $('#table-indicators').html(output)
 
-      $('#table-indicators').bootstrapTable('destroy');
-      $('#table-indicators').bootstrapTable({ data: data });
+        $('#table-indicators').bootstrapTable('destroy');
+        $('#table-indicators').bootstrapTable({ data: data });
 
-      $('#toolbar-indicators').find('select').change(function () {
-        $('#table-indicators').bootstrapTable('refreshOptions', {
-          exportDataType: $(this).val()
+        $('#toolbar-indicators').find('select').change(function () {
+          $('#table-indicators').bootstrapTable('refreshOptions', {
+            exportDataType: $(this).val()
+          });
         });
       });
     }
 
     if ("{{arg}}" == "indicator"){
-      data = get_neo4j_json_for_table(arg);
-      output = '<thead><tr><th data-field="state" data-checkbox="true">ID</th>'
-      for (row in data[0]){
-        output += '<th data-field="'+row+'" data-sortable="true">'+row+'</th>'
-      }
-      output += '</tr></thead>'
-      $('#table-indicators').html(output)
+      ajaxMaskUI({
+        url: "get_neo4j_json_for_table",
+        type: "GET",
+        data: arg,
+        maskUI: 'rgba(176,176,176,0.7)'
+      }, i).fail(function (jqXHR, textStatus, errorThrown) {
+        console.log('error ' + textStatus);
+      }).done(function (data, textStatus, jqXHR) {
+        output = '<thead><tr><th data-field="state" data-checkbox="true">ID</th>'
+        for (row in data[0]){
+          output += '<th data-field="'+row+'" data-sortable="true">'+row+'</th>'
+        }
+        output += '</tr></thead>'
+        $('#table-indicators').html(output)
 
-      $('#table-indicators').bootstrapTable('destroy');
-      $('#table-indicators').bootstrapTable({ data: data });
+        $('#table-indicators').bootstrapTable('destroy');
+        $('#table-indicators').bootstrapTable({ data: data });
 
-      $('#toolbar-indicators').find('select').change(function () {
-        $('#table-indicators').bootstrapTable('refreshOptions', {
-          exportDataType: $(this).val()
+        $('#toolbar-indicators').find('select').change(function () {
+          $('#table-indicators').bootstrapTable('refreshOptions', {
+            exportDataType: $(this).val()
+          });
         });
       });
     }
 
-  }, 500);
+  }, 1000);
 }
 
 
@@ -621,7 +637,7 @@ $(document).on('click', '#delete_relationship', function() {
 //-- #################################################################### -->
 //--  Action - Add a node -->
 //-- #################################################################### -->
-$(document).on('click', '#add_node', function() {
+$(document).on('click', '#create_indicator', function() {
   var output = "";
   for (var row in all_types) {
       output += '<option data-value="'+row+'" value="'+row+'"  />';
@@ -640,11 +656,11 @@ $(document).on('click', '#add_node', function() {
 
   $('#modal_add_new_node').modal()
   $('#modal_add_new_node').on('show.bs.modal', function() {
-    $('#add_node_form').bootstrapValidator('resetForm', true);
+    $('#create_indicator_form').bootstrapValidator('resetForm', true);
   });
 
   $(document).ready(function() {
-    $('#add_node_form').bootstrapValidator({
+    $('#create_indicator_form').bootstrapValidator({
         message: 'This value is not valid',
         feedbackIcons: {
           valid: 'glyphicon glyphicon-ok',
@@ -674,7 +690,7 @@ $(document).on('click', '#add_node', function() {
           e.stopImmediatePropagation();
           var valuesToSubmit = $(this).serialize();
           ajaxMaskUI({
-            url: "add_node",
+            url: "create_indicator",
             type: "POST",
             data: valuesToSubmit,
             maskUI: 'rgba(176,176,176,0.7)'
@@ -1013,10 +1029,10 @@ $(document).on('click', '#edit_node', function() {
 //--  Action - Results from actions -->
 //-- #################################################################### -->
 
-$(document).on('click', '#link-actions', function() {
+$(document).on('click', '#link-actions li', function() {
   $("#receive_action_form").bootstrapValidator("destroy");
   var count_result_action = 0;
-  digo = $("#link-actions").text();
+  digo = this.id;
   value = node_selected.label;
   type = node_selected.properties.type;
   ajaxMaskUI({
@@ -1092,10 +1108,10 @@ $(document).on('click', '#link-actions', function() {
           $('input[name="node_check_'+i+'"]:checked').each(function() {
             type = $('input[name="node_key_'+i+'"]').val();
             value = $('input[name="node_value_'+i+'"]').val();
-            valuesToSubmit = ('type='+type+'&value='+value+'&confidence=&diamondmodel=&campaign=&firstseen=&lastseen=&tags=&comments=');
+            valuesToSubmit = ('type='+type+'&value='+value+'&confidence=&diamondmodel=&campaign=&tags=&comments=');
             id1 = node_selected.id;
             ajaxMaskUI({
-              url: "add_node",
+              url: "create_indicator",
               type: "POST",
               data: valuesToSubmit,
               maskUI: 'rgba(176,176,176,0.7)'
@@ -1183,207 +1199,6 @@ $(document).ready(function() {
 </script>
 
 
-<!-- #################################################################### -->
-<!--  Modal used for adding a node -->
-<!-- #################################################################### -->
-<div class="modal fade" id="modal_add_new_node" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">
-          <span aria-hidden="true">&times;</span>
-          <span class="sr-only">Close</span>
-        </button>
-        <h4 class="modal-title" id="myModalLabel">New node</h4>
-      </div>
-      <div class="modal-body">
-        <form id="add_node_form">
-          <div class="form-group">
-            <div class="col-md-12">
-              <label class="modal-form-label">Type (required)</label></br>
-              <div class="dropdown">
-                <input class="form-control modal-form-input" name="type" type="search" id="inputtype" list="types" placeholder="Pick a type ..." pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character">
-                <datalist id="types"></datalist>
-              </div>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-md-12">
-              <label class="modal-form-label">Value (required)</label>
-              <input class="form-control modal-form-input" name="value" type=text  id="inputvalue" placeholder="8.8.8.8, or toto.com ..." pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character" />
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-md-12">
-              <label class="modal-form-label">Confidence (optional)</label>
-              <select class="form-control modal-form-input" name="confidence" id="inputconfidence">
-                <option value="" selected="true"></option>
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-md-12">
-              <label class="modal-form-label">Diamond Model (optional)</label>
-              <select class="form-control modal-form-input" name="diamondmodel" id="inputdiamondmodel">
-                <option value="" selected="true"></option>
-                <option value="Adversary">Adversary</option>
-                <option value="Infrastructure">Infrastructure</option>
-                <option value="Victim">Victim</option>
-                <option value="Capability">Capability</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-md-12">
-              <label class="modal-form-label">Campaign/Investigation (optional)</label></br>
-              <div class="dropdown">
-                <input class="form-control modal-form-input" name="campaign" type="search" id="inputcampaign" list="campaigns" placeholder="Pick a campaign ..." pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character" >
-                <datalist id="campaigns"></datalist>
-              </div>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-md-12">
-              <label class="modal-form-label">First Seen (optional)</label>
-              <input type=text class="form-control modal-form-input" name="firstseen" id="inputfirstseen" placeholder="15/10/2016" pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character"></input>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-md-12">
-              <label class="modal-form-label">Last Seen (optional)</label>
-              <input type=text class="form-control modal-form-input" name="lastseen" id="inputlastseen" placeholder="15/10/2016" pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character"></input>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-md-12">
-              <label class="modal-form-label">Tags (optional)</label>
-              <input type=text class="form-control modal-form-input" name="tags" id="inputtags" placeholder="ransomware, phishing, etc." pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character"></input>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-md-12">
-              <label class="modal-form-label">Comments (optional)</label>
-              <textarea class="form-control modal-form-input" name="comments" id="inputcomments" row="4" placeholder="Up to you :P" pattern="^[-a-zA-Z0-9/_,.@ ]*$" data-bv-regexp-message="The value cannot contain special character"></textarea>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="modal-footer">
-              <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
-              <button type="submit" class="btn btn-primary">Add new node</button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-
-
-
-<!-- #################################################################### -->
-<!--  Modal used for adding a relationship -->
-<!-- #################################################################### -->
-<div class="modal fade" id="modal_add_new_relationship" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">
-          <span aria-hidden="true">&times;</span>
-          <span class="sr-only">Close</span>
-        </button>
-        <h4 class="modal-title" id="myModalLabel">New relationship</h4>
-      </div>
-      <div class="modal-body">
-        <form id="add_relationship_form">
-          <div class="form-group">
-            <div class="col-md-12">
-              <label class="modal-form-label">Relationship</label></br>
-              <div class="dropdown">
-                <input class="form-control modal-form-input" name="id1" type="search" id="inputid" list="relations" placeholder="Pick a type ..." >
-                <datalist id="relations"></datalist>
-              </div>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="modal-footer">
-              <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
-              <button type="submit" class="btn btn-primary">Add new relationship</button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-
-
-<!-- #################################################################### -->
-<!--  Modal used for adding a property -->
-<!-- #################################################################### -->
-<div class="modal fade" id="modal_add_new_property" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">
-          <span aria-hidden="true">&times;</span>
-          <span class="sr-only">Close</span>
-        </button>
-        <h4 class="modal-title" id="myModalLabel">New property</h4>
-      </div>
-      <div class="modal-body">
-        <form id="add_property_form">
-          <div class="form-group">
-            <div class="col-md-12">
-              <label class="modal-form-label">Key</label>
-              <input type=text class="form-control modal-form-input" name="propertykey" id="inputpropertykey" placeholder="address, etc."></input>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-md-12">
-              <label class="modal-form-label">Value</label>
-              <input type=text class="form-control modal-form-input" name="propertyvalue" id="inputpropertyvalue" placeholder="5 collins street ..."></input>
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="modal-footer">
-              <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
-              <button type="submit" class="btn btn-primary">Add new property</button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-
-
-
-<!-- #################################################################### -->
-<!--  Modal used for editting a node -->
-<!-- #################################################################### -->
-<div class="modal fade" id="modal_edit_node" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">
-          <span aria-hidden="true">&times;</span>
-          <span class="sr-only">Close</span>
-        </button>
-        <h4 class="modal-title" id="myModalLabel">Edit node</h4>
-      </div>
-      <div class="modal-body">
-        <form id="edit_node_form">
-        </form>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-
-
-
 
 
 <!-- #################################################################### -->
@@ -1410,6 +1225,6 @@ $(document).ready(function() {
 
 
 
-
+{% include "modals.html" %}
 
 {% endblock content %}
