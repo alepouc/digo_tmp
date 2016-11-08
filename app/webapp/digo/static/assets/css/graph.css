@@ -169,23 +169,8 @@ input.form-control {
 }
 
 
-@media (min-width: 768px) {
-  #modal_dialog_rightClickNode {
-      width: 400px;
-      overflow-y: initial !important
-  }
-}
 
-#modal_body_rightClickNode{
-    height: 250px;
-    overflow-y: auto;
-    padding: 5px;
-}
 
-#modal_header_rightClickNode {
-    padding:35px;
-    padding-top:20px;
-}
 
 
 

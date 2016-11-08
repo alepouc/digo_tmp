@@ -596,12 +596,14 @@ def upload_file():
             return redirect(request.url)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+            stream = io.StringIO(str(file.read().decode("utf-8", "ignore")))
             csv_input = csv.reader(stream)
+            #csv_input = csv.reader(open(file, encoding='ISO-8859-1'), delimiter=',',quotechar='"')
             data = list(csv_input)
             for row in range(0, len(data)):
                 output = {}
                 if row == 0:
+                    print(data[row])
                     if 'type' not in data[row] or 'value' not in data[row]:
                         return render_template("upload.html", message='The type field or value field has not been found !')
                     else:
@@ -615,15 +617,15 @@ def upload_file():
                         else:
                             output[names[column]] = data[row][column]
 
-                    if 'confidence' not in data[row]:
+                    if 'confidence' not in data[0]:
                         output['confidence'] = 'NULL'
-                    if 'diamondmodel' not in data[row]:
+                    if 'diamondmodel' not in data[0]:
                         output['diamondmodel'] = 'NULL'
-                    if 'campaign' not in data[row]:
+                    if 'campaign' not in data[0]:
                         output['campaign'] = 'NULL'
-                    if 'tags' not in data[row]:
+                    if 'tags' not in data[0]:
                         output['tags'] = 'NULL'
-                    if 'comments' not in data[row]:
+                    if 'comments' not in data[0]:
                         output['comments'] = 'NULL'
 
                     query = 'START n=node(*) WHERE n.type = "'+output['type']+'" return n'

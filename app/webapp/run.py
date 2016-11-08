@@ -13,8 +13,6 @@ app.jinja_env.autoescape = False
 
 app.config["JSON_SORT_KEYS"] = False
 
-ALLOWED_EXTENSIONS = set(['csv'])
-
 UPLOAD_FOLDER = '/upload_tmp'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 

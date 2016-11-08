@@ -6,6 +6,7 @@ import random
 from passlib.hash import bcrypt
 from glob import glob
 
+ALLOWED_EXTENSIONS = set(['csv'])
 
 
 gdb = GraphDatabase("http://digo-db:7474/db/data", username="neo4j", password="debug")
